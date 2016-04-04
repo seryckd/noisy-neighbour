@@ -59,10 +59,13 @@ NOISY.render = function (canvas, interval) {
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");
 
+   /*
    if (!NOISY.images.isReady()) {
       console.log('waiting for image to load');
       return;
    }
+   */
+   
    /*
    NOISY.hexgrid.each(function (cell) {
       //console.log("x:" + cell.xy.x + " y:");
@@ -105,8 +108,8 @@ NOISY.run = function () {
    canvas.height = 400;
    document.body.appendChild(canvas);
 
-   NOISY.images = new IMAGES();
-   NOISY.images.load('beach', 'beach4.png');
+//   NOISY.images = new IMAGES();
+//   NOISY.images.load('beach', 'beach4.png');
 
    NOISY.hexgrid = new HEX();
 
