@@ -1,36 +1,24 @@
 /*jslint browser: true, devel: true*/
-/*globals IMAGES,HEX,UTILS*/
+/*globals IMAGES,HEX,UTILS,PLAYER*/
+
+/*
+ * Control Scheme
+ *
+ * selected player
+ *   highlighted hexagon
+ *   shows possible movement by white colour on all cells
+ *   as mouse moves over possible squares, show path with small white hexes
+ *   selecting a possible square makes the player move there and leaves player selected
+ *
+ * clicking outside the player and possible squares will remove the selection
+ */
 
 var NOISY = NOISY || {};
 
-// Polyfill for window.performance.now
-// (not available on iPhone 4)
-(function(){
-
-  if ("performance" in window == false) {
-      window.performance = {};
-  }
-  
-  Date.now = (Date.now || function () {  // thanks IE8
-	  return new Date().getTime();
-  });
-
-  if ("now" in window.performance == false){
-    
-    var nowOffset = Date.now();
-    
-    if (performance.timing && performance.timing.navigationStart){
-      nowOffset = performance.timing.navigationStart
-    }
-
-    window.performance.now = function now(){
-      return Date.now() - nowOffset;
-    }
-  }
-
-})();
-
 NOISY.selectedCell = null;
+NOISY.selectedPlayer = null;
+
+NOISY.players = [];
 
 // Called on canvas event listener
 NOISY.mousemove = function (canvas) {
@@ -40,9 +28,42 @@ NOISY.mousemove = function (canvas) {
    // e.screenX, e.screenY in global (screen) coords
    return function (e) {
       // offset are window coords of the canvas
-    //  var offset = UTILS.realPosition(canvas),
+      //  var offset = UTILS.realPosition(canvas),
       //   mx = e.clientX - offset[0],
-        // my = e.clientY - offset[1],
+      // my = e.clientY - offset[1],
+      var offset, mx, my, cell;
+
+      offset = UTILS.realPosition(canvas);
+      //console.log('offset=(' + offset[0] + ',' + offset[1] + ')');
+      mx = e.clientX - offset[0];
+      my = e.clientY - offset[1];
+      //console.log('(' + mx + ',' + my + ')');
+
+      cell = NOISY.hexgrid.selectHex(mx, my);
+
+      /*
+      if (cell !== null) {
+         NOISY.selectedCell = cell;
+         //  console.log("cell=" + NOISY.selectedCell.getHash());
+      } else {
+         NOISY.selectedCell = null;
+         //   console.log("cell=null");
+      }
+      */
+   };
+};
+
+// Called on canvas event listener
+NOISY.click = function (canvas) {
+   "use strict";
+
+   // e.clientX, e.clientY in local (DOM content) coords (Browser Window 0,0 is top left)
+   // e.screenX, e.screenY in global (screen) coords
+   return function (e) {
+      // offset are window coords of the canvas
+      //  var offset = UTILS.realPosition(canvas),
+      //   mx = e.clientX - offset[0],
+      // my = e.clientY - offset[1],
       var offset, mx, my, cell;
 
       offset = UTILS.realPosition(canvas);
@@ -54,11 +75,10 @@ NOISY.mousemove = function (canvas) {
       cell = NOISY.hexgrid.selectHex(mx, my);
 
       if (cell !== null) {
-         NOISY.selectedCell = cell;
-       //  console.log("cell=" + NOISY.selectedCell.getHash());
+         NOISY.selectedPlayer = NOISY.players[0];
+         NOISY.players[0].setCell(cell.getHash());
       } else {
-         NOISY.selectedCell = null;
-      //   console.log("cell=null");
+         NOISY.selectedPlayer = null;
       }
    };
 };
@@ -81,7 +101,8 @@ NOISY.render = function (canvas, interval) {
       digitWidth = 10,
       spos,
       count,
-      text = 'say hello';
+      text = 'say hello',
+      cell;
 
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");
@@ -92,7 +113,7 @@ NOISY.render = function (canvas, interval) {
       return;
    }
    */
-   
+
    /*
    NOISY.hexgrid.each(function (cell) {
       //console.log("x:" + cell.xy.x + " y:");
@@ -109,15 +130,20 @@ NOISY.render = function (canvas, interval) {
 
    NOISY.hexgrid.drawHexes(ctx, NOISY.selectedCell);
 
-   ctx.font = "20px Times New Roman";
-   ctx.fillStyle = "Black";
+   // draw player
+   NOISY.players.forEach(function (element) {
+      cell = NOISY.hexgrid.getCell(element.getCell());
 
-   spos = canvas.width - 1.5 * digitWidth;
-   for (count = text.length - 1; count >= 0; count -= 1) {
-      ctx.fillText(text.charAt(count), spos, 30);
-      spos -= digitWidth;
-   }
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(cell.centerxy.x, cell.centerxy.y, 4, 4);
 
+      if (NOISY.selectedPlayer === element) {
+         NOISY.hexgrid.drawHexPath(ctx, cell);
+         ctx.strokeStyle = '#ff0000';
+         ctx.stroke();
+      }
+
+   });
 };
 
 NOISY.run = function () {
@@ -135,17 +161,23 @@ NOISY.run = function () {
    canvas.height = 400;
    document.body.appendChild(canvas);
 
-//   NOISY.images = new IMAGES();
-//   NOISY.images.load('beach', 'beach4.png');
+   //   NOISY.images = new IMAGES();
+   //   NOISY.images.load('beach', 'beach4.png');
 
    NOISY.hexgrid = new HEX();
 
    NOISY.hexgrid.init();
-   //HEX.init();
+
+   NOISY.players[0] = new PLAYER();
+   // TODO: how to discover hexagon cell?
+   NOISY.players[0].setCell("0_0");
 
    // Track the mouse
    // Only call after setup globals
    canvas.addEventListener("mousemove", NOISY.mousemove(canvas));
+
+   // Track clicks
+   canvas.addEventListener("click", NOISY.click(canvas));
 
    function frame() {
       now = window.performance.now();

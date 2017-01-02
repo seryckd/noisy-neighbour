@@ -158,7 +158,7 @@ function HEX() {
 
    // Return (x,y) coords of one of the hex corners.
    // angle: corner number (0-5)
-   function hexCorner(center, size, angle) {
+   function hexCorner(center, angle) {
       var angle_deg = 60 * angle,
          angle_rad;
 
@@ -169,8 +169,8 @@ function HEX() {
       angle_rad = Math.PI / 180 * angle_deg;
 
       return {
-         x: center.x + size * Math.cos(angle_rad),
-         y: center.y + size * Math.sin(angle_rad)
+         x: center.x + hexSize * Math.cos(angle_rad),
+         y: center.y + hexSize * Math.sin(angle_rad)
       };
    }
 
@@ -249,6 +249,23 @@ function HEX() {
       return hex;
    }
 
+   function drawHexPath(ctx, cell) {
+
+      var p,
+         i;
+
+      ctx.beginPath();
+      p = hexCorner(cell.centerxy, 5);
+      ctx.moveTo(p.x, p.y);
+
+      for (i = 0; i <= 5; i = i + 1) {
+         p = hexCorner(cell.centerxy, i);
+         ctx.lineTo(p.x, p.y);
+      }
+
+      ctx.closePath();
+   }
+
    function drawHexes(ctx, selectedHex) {
       var i,
          p;
@@ -257,16 +274,7 @@ function HEX() {
       ctx.strokeStyle = 'black';
 
       each(function (cell) {
-         ctx.beginPath();
-         p = hexCorner(cell.centerxy, hexSize, 5);
-         ctx.moveTo(p.x, p.y);
-
-         for (i = 0; i <= 5; i = i + 1) {
-            p = hexCorner(cell.centerxy, hexSize, i);
-            ctx.lineTo(p.x, p.y);
-         }
-
-         ctx.closePath();
+         drawHexPath(ctx, cell);
 
          if (selectedHex === cell) {
             ctx.fillStyle = '#FF0000';
@@ -276,9 +284,14 @@ function HEX() {
          ctx.fill();
          ctx.stroke();
 
-         ctx.fillStyle = '#000000';
-         ctx.fillRect(cell.centerxy.x, cell.centerxy.y, 1, 1);
+         // draw centre
+         //ctx.fillStyle = '#000000';
+         //ctx.fillRect(cell.centerxy.x, cell.centerxy.y, 1, 1);
       });
+   }
+
+   function getCell(hash) {
+      return cells[hash];
    }
 
    return {
@@ -287,6 +300,8 @@ function HEX() {
       each: each,
       selectHex: selectHex,
       drawHexes: drawHexes,
+      drawHexPath: drawHexPath,
+      getCell: getCell,
 
       // expose in developer tools
       cells: cells,
