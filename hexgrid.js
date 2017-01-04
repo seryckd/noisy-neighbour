@@ -103,7 +103,7 @@ function HEX() {
       }
    }
 
-   function init() {
+   function init(numberCols, numberRows) {
 
       var row,
          col,
@@ -113,8 +113,8 @@ function HEX() {
          rowCols,
          halfHexSize;
 
-      numCols = 5;
-      numRows = 5;
+      numCols = numberCols;
+      numRows = numberRows;
       hexSize = 36;
       halfHexSize = hexSize / 2;
 

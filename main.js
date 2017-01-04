@@ -16,40 +16,53 @@
 var NOISY = NOISY || {};
 
 NOISY.selectedCell = null;
+NOISY.mouseOverCell = null;
 NOISY.selectedPlayer = null;
+NOISY.viewport = {
+   x : 0,
+   y : 0
+};
 
 NOISY.players = [];
+
+NOISY.keymap = {
+   65 : 'left',         // 'a'
+   68 : 'right',        // 'd'
+   87 : 'up',           // 'w'
+   83 : 'down'          // 's'
+};
+
+NOISY.keydown = {};
+
+// Convert event coords to a cell
+// Return: cell | null
+NOISY.coordsToCell = function (canvas, e) {
+   "use strict";
+
+   // NOTE: may need to consider this http://stackoverflow.com/questions/55677/how-do-i-get-the-coordinates-of-a-mouse-click-on-a-canvas-element/18053642#18053642
+
+   // e.clientX, e.clientY in local (DOM content) coords (Browser Window 0,0 is top left)
+   // e.screenX, e.screenY in global (screen) coords
+
+   var canvasOffset = UTILS.realPosition(canvas),
+      x = e.clientX - canvasOffset[0] - NOISY.viewport.x,
+      y = e.clientY - canvasOffset[1] - NOISY.viewport.y;
+
+   return NOISY.hexgrid.selectHex(x, y);
+};
 
 // Called on canvas event listener
 NOISY.mousemove = function (canvas) {
    "use strict";
 
-   // e.clientX, e.clientY in local (DOM content) coords (Browser Window 0,0 is top left)
-   // e.screenX, e.screenY in global (screen) coords
    return function (e) {
-      // offset are window coords of the canvas
-      //  var offset = UTILS.realPosition(canvas),
-      //   mx = e.clientX - offset[0],
-      // my = e.clientY - offset[1],
-      var offset, mx, my, cell;
+      var cell = NOISY.coordsToCell(canvas, e);
 
-      offset = UTILS.realPosition(canvas);
-      //console.log('offset=(' + offset[0] + ',' + offset[1] + ')');
-      mx = e.clientX - offset[0];
-      my = e.clientY - offset[1];
-      //console.log('(' + mx + ',' + my + ')');
-
-      cell = NOISY.hexgrid.selectHex(mx, my);
-
-      /*
       if (cell !== null) {
-         NOISY.selectedCell = cell;
-         //  console.log("cell=" + NOISY.selectedCell.getHash());
+         NOISY.mouseOverCell = cell;
       } else {
-         NOISY.selectedCell = null;
-         //   console.log("cell=null");
+         NOISY.mouseOverCell = null;
       }
-      */
    };
 };
 
@@ -57,22 +70,8 @@ NOISY.mousemove = function (canvas) {
 NOISY.click = function (canvas) {
    "use strict";
 
-   // e.clientX, e.clientY in local (DOM content) coords (Browser Window 0,0 is top left)
-   // e.screenX, e.screenY in global (screen) coords
    return function (e) {
-      // offset are window coords of the canvas
-      //  var offset = UTILS.realPosition(canvas),
-      //   mx = e.clientX - offset[0],
-      // my = e.clientY - offset[1],
-      var offset, mx, my, cell;
-
-      offset = UTILS.realPosition(canvas);
-      //console.log('offset=(' + offset[0] + ',' + offset[1] + ')');
-      mx = e.clientX - offset[0];
-      my = e.clientY - offset[1];
-      //console.log('(' + mx + ',' + my + ')');
-
-      cell = NOISY.hexgrid.selectHex(mx, my);
+      var cell = NOISY.coordsToCell(canvas, e);
 
       if (cell !== null) {
          NOISY.selectedPlayer = NOISY.players[0];
@@ -83,8 +82,69 @@ NOISY.click = function (canvas) {
    };
 };
 
+NOISY.keypress = function () {
+   "use strict";
+
+   var acc = 2,
+      lastkey = 0;
+
+   return function (e) {
+
+      console.log('keypress ' + e.keyCode);
+
+      if (lastkey === e.keyCode) {
+         acc += 1.5;
+
+         if (acc > 15) {
+            acc = 15;
+         }
+      } else {
+         acc = 2;
+      }
+
+      lastkey = e.keyCode;
+
+      // a 97
+      if (e.keyCode === 97) {
+         NOISY.viewport.x -= NOISY.viewport.acc;
+
+      // d
+      } else if (e.keyCode === 100) {
+         NOISY.viewport.x += NOISY.viewport.acc;
+
+      // w
+      } else if (e.keyCode === 119) {
+         NOISY.viewport.y -= NOISY.viewport.acc;
+
+      // s
+      } else if (e.keyCode === 115) {
+         NOISY.viewport.y += NOISY.viewport.acc;
+      }
+
+   };
+};
+
 NOISY.update = function (interval) {
    "use strict";
+
+   var velocity = 5;
+
+   // -------------------------------------------------------------------------
+   // scroll the viewport
+
+   if (NOISY.keydown.up === true) {
+      NOISY.viewport.y += velocity;
+
+   } else if (NOISY.keydown.down === true) {
+      NOISY.viewport.y -= velocity;
+   }
+
+   if (NOISY.keydown.left === true) {
+      NOISY.viewport.x += velocity;
+
+   } else if (NOISY.keydown.right === true) {
+      NOISY.viewport.x -= velocity;
+   }
 
 };
 
@@ -106,6 +166,9 @@ NOISY.render = function (canvas, interval) {
 
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");
+
+   ctx.clearRect(0, 0, canvas.width, canvas.height);
+   ctx.translate(NOISY.viewport.x, NOISY.viewport.y);
 
    /*
    if (!NOISY.images.isReady()) {
@@ -144,13 +207,23 @@ NOISY.render = function (canvas, interval) {
       }
 
    });
+
+   // mouse over cell
+   if (NOISY.mouseOverCell !== null) {
+      NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell);
+      ctx.strokeStyle = '#00ff00';
+      ctx.stroke();
+   }
+
+   // reset current transformation matrix to the identity matrix
+   ctx.setTransform(1, 0, 0, 1, 0, 0);
 };
 
 NOISY.run = function () {
    "use strict";
 
    var now,
-      dt,
+      dt = 0,
       last = window.performance.now(),
       step = 1 / 60,
       canvas;
@@ -166,7 +239,7 @@ NOISY.run = function () {
 
    NOISY.hexgrid = new HEX();
 
-   NOISY.hexgrid.init();
+   NOISY.hexgrid.init(16, 16);
 
    NOISY.players[0] = new PLAYER();
    // TODO: how to discover hexagon cell?
@@ -178,6 +251,16 @@ NOISY.run = function () {
 
    // Track clicks
    canvas.addEventListener("click", NOISY.click(canvas));
+
+   // Canvas can not get focus so can not listen for keypresses
+   window.addEventListener("keydown", function (e) {
+      NOISY.keydown[NOISY.keymap[e.keyCode]] = true;
+   });
+
+   // Canvas can not get focus so can not listen for keypresses
+   window.addEventListener("keyup", function (e) {
+      NOISY.keydown[NOISY.keymap[e.keyCode]] = false;
+   });
 
    function frame() {
       now = window.performance.now();
@@ -199,10 +282,10 @@ NOISY.run = function () {
 
       last = now;
 
-      requestAnimationFrame(frame);
+      window.requestAnimationFrame(frame);
    }
 
-   requestAnimationFrame(frame);
+   window.requestAnimationFrame(frame);
 };
 
 NOISY.run();
