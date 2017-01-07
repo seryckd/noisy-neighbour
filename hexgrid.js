@@ -38,10 +38,11 @@
  *    (1,1)  (3,0)
  *
  *
- * Cube Coordinates
- * (x, y, z)
+ * Cube Coordinates (x, y, z)
+ *
  * Where x + y + z = 0
  *
+ * Cube coords are used for the algorithms.
  *
  */
 
@@ -56,38 +57,77 @@ function HEX() {
       hexPixelHeight,   // height of hex in pixels
       hexSize;          // length of hexagon size
 
-   function getHash(q, r) {
-      return q + "_" + r;
+
+   // Hex represented in axial coords
+   function Axial(q, r) {
+      this.q = q;
+      this.r = r;
+
+      this.hash = function () {
+         //return q + "_" + r;
+         return "(" + q + "," + r + ")";
+      };
+   }
+
+   // Hex represented in cube coords
+   function Cube(x, y, z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+
+      this.hash = function () {
+         return "(" + x + "," + y + "," + z + ")";
+      };
+   }
+
+   // Convert Cube coords to Axial coords
+   // Params
+   // Cube c
+   // Return Axial
+   function cube_to_axial(c) {
+      return new Axial(c.x, c.z);
+   }
+
+   // Convert Axial coords to Cube coords
+   // Params
+   // Axial ax
+   // Return Cube
+   function axial_to_cube(ax) {
+      var x = ax.q,
+         z = ax.r,
+         y = -x - z;
+      return new Cube(x, y, z);
    }
 
    // Object: Individual Hex
    function Cell(q, r) {
 
-      this.axial = {
-         q: q,
-         r: r
-      };
+      this.axial = new Axial(q, r);
 
       // x,y drawing coords (based on top lef)
       this.xy = {};
       this.centerxy = {};
 
       this.getHash = function () {
-//         return this.axial.q + "_" + this.axial.r;
-         return getHash(this.axial.q, this.axial.r);
+         return this.axial.hash();
       };
    }
 
-   function toPixelXY(q, r) {
+
+   // Calculate the pixel coords from axial coords
+   // Params
+   // Axial ax
+   // Return {x, y} pixel coords
+   function toPixelXY(ax) {
       if (isFlatTop) {
          return {
-            x: Math.floor(hexSize * 3 / 2 * q),
-            y: Math.floor(hexSize * Math.sqrt(3) * (r + q / 2))
+            x: Math.floor(hexSize * 3 / 2 * ax.q),
+            y: Math.floor(hexSize * Math.sqrt(3) * (ax.r + ax.q / 2))
          };
       } else {
          return {
-            x: Math.floor(hexSize * Math.sqrt(3) * (q + r / 2)),
-            y: Math.floor(hexSize * 3 / 2 * r)
+            x: Math.floor(hexSize * Math.sqrt(3) * (ax.q + ax.r / 2)),
+            y: Math.floor(hexSize * 3 / 2 * ax.r)
          };
       }
    }
@@ -142,7 +182,7 @@ function HEX() {
                r = row;
             }
             cell = new Cell(q, r);
-            cell.xy = toPixelXY(cell.axial.q, cell.axial.r);
+            cell.xy = toPixelXY(cell.axial);
 
             cell.centerxy = {
                x: cell.xy.x + hexPixelWidth / 2,
@@ -174,48 +214,8 @@ function HEX() {
       };
    }
 
-   /*
-   function toAxial(cube) {
-      return {
-         q: cube.x,
-         r: cube.z
-      };
-   }
 
-   function toCube(axial) {
-      return {
-         x: axial.q,
-         y: -axial.q - axial.r,
-         z: axial.r
-      };
-   }
-
-   // Takes floating point cube coords and converts to int cube coords
-   // cube {x, y, z}
-   function cubeRound(cube) {
-      var rx = Math.round(cube.x),
-         ry = Math.round(cube.y),
-         rz = Math.round(cube.z),
-         xdiff = Math.abs(rx - cube.x),
-         ydiff = Math.abs(ry - cube.y),
-         zdiff = Math.abs(rz - cube.z);
-
-      if (xdiff > ydiff && xdiff > zdiff) {
-         rx = -ry - rz;
-      } else if (ydiff > zdiff) {
-         ry = -rx - rz;
-      } else {
-         rz = -rx - ry;
-      }
-
-      return {
-         x: rx,
-         y: ry,
-         z: rz
-      };
-   }
-   */
-
+   // selectHexFromPixel
    function selectHex(x, y) {
       //x = x - xyoffset.x;
       //y = y - xyoffset.y;
@@ -240,7 +240,7 @@ function HEX() {
          q = Math.floor((Math.floor(2 * x1 + 1) + t2) / 3) - r;
       }
 
-      hex = cells[getHash(q, r)];
+      hex = cells[new Axial(q, r).hash()];
 
       if (hex === undefined) {
          hex = null;
@@ -294,6 +294,90 @@ function HEX() {
       return cells[hash];
    }
 
+   // ---------------------------------------------
+
+
+   // Calculate the number of hexes between two Cubes
+   // Params
+   // Cube a
+   // Cube b
+   function cube_distance(a, b) {
+      return (
+         Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + Math.abs(a.z - b.z)
+      ) / 2;
+   }
+
+   // Round floating point coords to integers
+   // Cube h
+   function cube_round(h) {
+      var rx = Math.round(h.x),
+         ry = Math.round(h.y),
+         rz = Math.round(h.z),
+         x_diff = Math.abs(rx - h.x),
+         y_diff = Math.abs(ry - h.y),
+         z_diff = Math.abs(rz - h.z);
+
+      if (x_diff > y_diff && x_diff > z_diff) {
+         rx = -ry - rz;
+      } else if (y_diff > z_diff) {
+         ry = -rx - rz;
+      } else {
+         rz = -rx - ry;
+      }
+
+      return new Cube(rx, ry, rz);
+   }
+
+   // linear interpolation of two numbers
+   // number a
+   // number b
+   // number t where 0 <= t <= 1.0
+   function lerp(a, b, t) {
+      return a + (b - a) * t;
+   }
+
+   // Calculate floating point coords at position t on the line
+   // between two Cubes
+   // Params
+   // Cube a
+   // Cube b
+   // number t where 0 <= t <= 1.0
+   function cube_lerp(a, b, t) {
+      return new Cube(
+         lerp(a.x, b.x, t),
+         lerp(a.y, b.y, t),
+         lerp(a.z, b.z, t)
+      );
+   }
+
+   // Calculate the cells that form a line between two cells.
+   // Params
+   // Cell a
+   // Cell b
+   // Return Cell[] where first entry is a and last entry is b
+   function line(a, b) {
+      var cubea = axial_to_cube(a.axial),
+         cubeb = axial_to_cube(b.axial),
+         N = cube_distance(cubea, cubeb),
+         results = [],
+         i,
+         axiali;
+
+      for (i = 0; i <= N; i += 1) {
+         axiali = cube_to_axial(cube_round(cube_lerp(cubea, cubeb, 1.0 / N * i)));
+         results.push(getCell(axiali.hash()));
+      }
+
+//      console.log("HEX line cells=" + results.length);
+//      results.forEach(function (e) {
+//         console.log("  " + e.getHash());
+//      });
+
+      return results;
+   }
+
+   // ---------------------------------------------
+
    return {
       // methods
       init: init,
@@ -302,6 +386,7 @@ function HEX() {
       drawHexes: drawHexes,
       drawHexPath: drawHexPath,
       getCell: getCell,
+      line: line,
 
       // expose in developer tools
       cells: cells,

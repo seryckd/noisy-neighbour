@@ -25,6 +25,7 @@ NOISY.viewport = {
 
 NOISY.players = [];
 
+// Map keypresses to actions
 NOISY.keymap = {
    65 : 'left',         // 'a'
    68 : 'right',        // 'd'
@@ -56,10 +57,24 @@ NOISY.mousemove = function (canvas) {
    "use strict";
 
    return function (e) {
-      var cell = NOISY.coordsToCell(canvas, e);
+      var cell = NOISY.coordsToCell(canvas, e),
+         line;
 
       if (cell !== null) {
+
          NOISY.mouseOverCell = cell;
+
+         cell = NOISY.hexgrid.getCell(NOISY.selectedPlayer.getCell());
+
+         if (NOISY.mouseOverCell !== cell) {
+
+            line = NOISY.hexgrid.line(cell, NOISY.mouseOverCell);
+            console.log("line:" + line.length);
+            line.forEach(function (e) {
+               console.log('  ' + e.getHash());
+            });
+         }
+
       } else {
          NOISY.mouseOverCell = null;
       }
@@ -243,7 +258,8 @@ NOISY.run = function () {
 
    NOISY.players[0] = new PLAYER();
    // TODO: how to discover hexagon cell?
-   NOISY.players[0].setCell("0_0");
+   NOISY.players[0].setCell("(0,0)");
+   NOISY.selectedPlayer = NOISY.players[0];
 
    // Track the mouse
    // Only call after setup globals
