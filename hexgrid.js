@@ -266,21 +266,17 @@ function HEX() {
       ctx.closePath();
    }
 
-   function drawHexes(ctx, selectedHex) {
+   function drawHexes(ctx) {
       var i,
          p;
 
       ctx.lineWidth = 1;
       ctx.strokeStyle = 'black';
+      ctx.fillStyle = '#b0b0b0';
 
       each(function (cell) {
          drawHexPath(ctx, cell);
 
-         if (selectedHex === cell) {
-            ctx.fillStyle = '#FF0000';
-         } else {
-            ctx.fillStyle = '#b0b0b0';
-         }
          ctx.fill();
          ctx.stroke();
 

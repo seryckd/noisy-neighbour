@@ -4,20 +4,31 @@
 /*
  * Control Scheme
  *
- * selected player
- *   highlighted hexagon
- *   shows possible movement by white colour on all cells
- *   as mouse moves over possible squares, show path with small white hexes
- *   selecting a possible square makes the player move there and leaves player selected
+ * mode select
+ *   mouse highlights cell with green border
  *
- * clicking outside the player and possible squares will remove the selection
+ * mode action
+ *   mouse highlights cell (target) with red border and all cells from source
+ *
+ * mouse click
+ *    mode select -> mode action
+ *    mode action -> mode select
+ *
  */
 
 var NOISY = NOISY || {};
 
-NOISY.selectedCell = null;
+var MODE_ACTION = 'a';
+var MODE_SELECT = 's';
+NOISY.mode = MODE_SELECT;
+
+// always the cell under the mouse
 NOISY.mouseOverCell = null;
-NOISY.selectedPlayer = null;
+// select mode - empty
+// action mode - head is source, tail is target (same as mouseOverCell)
+NOISY.selectedCells = [];
+
+
 NOISY.viewport = {
    x : 0,
    y : 0
@@ -33,6 +44,7 @@ NOISY.keymap = {
    83 : 'down'          // 's'
 };
 
+// Holds the keys currently pressed
 NOISY.keydown = {};
 
 // Convert event coords to a cell
@@ -62,17 +74,14 @@ NOISY.mousemove = function (canvas) {
 
       if (cell !== null) {
 
+         // always set mouseOverCell
          NOISY.mouseOverCell = cell;
 
-         cell = NOISY.hexgrid.getCell(NOISY.selectedPlayer.getCell());
+         if (NOISY.mode === MODE_ACTION) {
 
-         if (NOISY.mouseOverCell !== cell) {
-
-            line = NOISY.hexgrid.line(cell, NOISY.mouseOverCell);
-            console.log("line:" + line.length);
-            line.forEach(function (e) {
-               console.log('  ' + e.getHash());
-            });
+            if (NOISY.selectedCells[0] !== cell) {
+               NOISY.selectedCells = NOISY.hexgrid.line(NOISY.selectedCells[0], cell);
+            }
          }
 
       } else {
@@ -89,10 +98,27 @@ NOISY.click = function (canvas) {
       var cell = NOISY.coordsToCell(canvas, e);
 
       if (cell !== null) {
-         NOISY.selectedPlayer = NOISY.players[0];
-         NOISY.players[0].setCell(cell.getHash());
+
+         if (NOISY.mode === MODE_SELECT) {
+            if (NOISY.players[0].getCell() === cell) {
+               NOISY.mode = MODE_ACTION;
+               NOISY.selectedCells = [cell];
+            }
+         } else {
+            // action
+
+            if (cell !== NOISY.selectedCells[0]) {
+               NOISY.mode = MODE_SELECT;
+               NOISY.players[0].setCell(cell);
+            }
+         }
+
       } else {
-         NOISY.selectedPlayer = null;
+
+         NOISY.mode = MODE_SELECT;
+         NOISY.selectedCells = [];
+
+         NOISY.targetCell = null;
       }
    };
 };
@@ -182,55 +208,45 @@ NOISY.render = function (canvas, interval) {
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");
 
+   // set viewport to current position
    ctx.clearRect(0, 0, canvas.width, canvas.height);
    ctx.translate(NOISY.viewport.x, NOISY.viewport.y);
 
-   /*
-   if (!NOISY.images.isReady()) {
-      console.log('waiting for image to load');
-      return;
-   }
-   */
-
-   /*
-   NOISY.hexgrid.each(function (cell) {
-      //console.log("x:" + cell.xy.x + " y:");
-      //ctx.fillRect(
-      //   cell.xy.x,
-      //   cell.xy.y,
-      //   36,
-      //   36
-      //);
-
-      ctx.drawImage(NOISY.images.image('beach'), cell.xy.x, cell.xy.y);
-   });
-   */
-
-   NOISY.hexgrid.drawHexes(ctx, NOISY.selectedCell);
+   NOISY.hexgrid.drawHexes(ctx);
 
    // draw player
    NOISY.players.forEach(function (element) {
-      cell = NOISY.hexgrid.getCell(element.getCell());
+      //cell = NOISY.hexgrid.getCell(element.getCell());
+      cell = element.getCell();
 
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(cell.centerxy.x, cell.centerxy.y, 4, 4);
-
-      if (NOISY.selectedPlayer === element) {
-         NOISY.hexgrid.drawHexPath(ctx, cell);
-         ctx.strokeStyle = '#ff0000';
-         ctx.stroke();
-      }
+      ctx.drawImage(
+         NOISY.images.image("player"),
+         cell.centerxy.x - 25,
+         cell.centerxy.y - 25,
+         50,
+         50
+      );
 
    });
 
-   // mouse over cell
-   if (NOISY.mouseOverCell !== null) {
-      NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell);
-      ctx.strokeStyle = '#00ff00';
-      ctx.stroke();
+   if (NOISY.mode === MODE_SELECT) {
+      // mouse over cell
+      if (NOISY.mouseOverCell !== null) {
+         NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell);
+         ctx.strokeStyle = '#00ff00';
+         ctx.stroke();
+      }
+   } else {
+
+      NOISY.selectedCells.forEach(function (cell) {
+         NOISY.hexgrid.drawHexPath(ctx, cell);
+         ctx.strokeStyle = '#ff0000';
+         ctx.stroke();
+      });
    }
 
    // reset current transformation matrix to the identity matrix
+   // (clears the ctx.translate())
    ctx.setTransform(1, 0, 0, 1, 0, 0);
 };
 
@@ -242,6 +258,9 @@ NOISY.run = function () {
       last = window.performance.now(),
       step = 1 / 60,
       canvas;
+
+   NOISY.images = new IMAGES();
+   NOISY.images.load("player", "images/ball.png");
 
    canvas = document.createElement("canvas");
 
@@ -258,8 +277,7 @@ NOISY.run = function () {
 
    NOISY.players[0] = new PLAYER();
    // TODO: how to discover hexagon cell?
-   NOISY.players[0].setCell("(0,0)");
-   NOISY.selectedPlayer = NOISY.players[0];
+   NOISY.players[0].setCell(NOISY.hexgrid.getCell("(0,0)"));
 
    // Track the mouse
    // Only call after setup globals
@@ -301,7 +319,16 @@ NOISY.run = function () {
       window.requestAnimationFrame(frame);
    }
 
-   window.requestAnimationFrame(frame);
+   // Wait for images to load, then start game
+   function loading() {
+      if (NOISY.images.isReady()) {
+         window.requestAnimationFrame(frame);
+      } else {
+         window.requestAnimationFrame(loading);
+      }
+   }
+
+   window.requestAnimationFrame(loading);
 };
 
 NOISY.run();
