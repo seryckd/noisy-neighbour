@@ -115,6 +115,7 @@ NOISY.click = function (canvas) {
 
       } else {
 
+         console.log("no cell");
          NOISY.mode = MODE_SELECT;
          NOISY.selectedCells = [];
 
@@ -130,8 +131,6 @@ NOISY.keypress = function () {
       lastkey = 0;
 
    return function (e) {
-
-      console.log('keypress ' + e.keyCode);
 
       if (lastkey === e.keyCode) {
          acc += 1.5;
@@ -238,8 +237,8 @@ NOISY.render = function (canvas, interval) {
       }
    } else {
 
-      NOISY.selectedCells.forEach(function (cell) {
-         NOISY.hexgrid.drawHexPath(ctx, cell);
+      NOISY.selectedCells.forEach(function (c) {
+         NOISY.hexgrid.drawHexPath(ctx, c);
          ctx.strokeStyle = '#ff0000';
          ctx.stroke();
       });

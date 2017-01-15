@@ -357,11 +357,22 @@ function HEX() {
          N = cube_distance(cubea, cubeb),
          results = [],
          i,
-         axiali;
+         axiali,
+         cell;
 
       for (i = 0; i <= N; i += 1) {
          axiali = cube_to_axial(cube_round(cube_lerp(cubea, cubeb, 1.0 / N * i)));
-         results.push(getCell(axiali.hash()));
+
+         cell = getCell(axiali.hash());
+
+         if (cell === undefined) {
+            // cube_round may select a cell that is not in the grid
+            // seems to happen for the top row, so if it happens then increment row
+            axiali = new Axial(axiali.q, axiali.r + 1);
+            cell = getCell(axiali.hash());
+         }
+
+         results.push(cell);
       }
 
 //      console.log("HEX line cells=" + results.length);
