@@ -109,7 +109,7 @@ NOISY.click = function (canvas) {
 
             if (cell !== NOISY.selectedCells[0]) {
                NOISY.mode = MODE_SELECT;
-               NOISY.players[0].setCell(cell);
+               NOISY.players[0].movePath(NOISY.selectedCells);
             }
          }
 
@@ -186,6 +186,12 @@ NOISY.update = function (interval) {
       NOISY.viewport.x -= velocity;
    }
 
+   // -------------------------------------------------------------------------
+   // move player
+
+   NOISY.players.forEach(function (p) {
+      p.update(interval);
+   });
 };
 
 // Ideas to improve performance
@@ -214,18 +220,8 @@ NOISY.render = function (canvas, interval) {
    NOISY.hexgrid.drawHexes(ctx);
 
    // draw player
-   NOISY.players.forEach(function (element) {
-      //cell = NOISY.hexgrid.getCell(element.getCell());
-      cell = element.getCell();
-
-      ctx.drawImage(
-         NOISY.images.image("player"),
-         cell.centerxy.x - 25,
-         cell.centerxy.y - 25,
-         50,
-         50
-      );
-
+   NOISY.players.forEach(function (p) {
+      p.render(ctx, NOISY.images);
    });
 
    if (NOISY.mode === MODE_SELECT) {
@@ -276,7 +272,7 @@ NOISY.run = function () {
 
    NOISY.players[0] = new PLAYER();
    // TODO: how to discover hexagon cell?
-   NOISY.players[0].setCell(NOISY.hexgrid.getCell("(0,0)"));
+   NOISY.players[0].setStartPos(NOISY.hexgrid.getCell("(0,0)"));
 
    // Track the mouse
    // Only call after setup globals
