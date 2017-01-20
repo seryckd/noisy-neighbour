@@ -24,9 +24,6 @@ function PLAYER() {
       // first element is the same as the currentcell
       path.shift();
 
-      // always has at least two elements
-//      currentCell = path.shift();
-
       //currentCell = path[path.length - 1];
       centerxy = copyCenter(currentCell);
    }

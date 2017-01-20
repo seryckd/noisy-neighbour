@@ -4,8 +4,8 @@ TODO
 * _input selects grid (done)_
 * _cross hairs mark hex cursor is over (done)_
 * _scroll it with keys (done)_
-* character moves around grid
-* player moves towards clicked hex 1 hex at a time
+* _character moves around grid (done)_
+* _player moves towards clicked hex 1 hex at a time (done)_
 * add walls scenery
 * track movement points
 * button for end turn
@@ -17,6 +17,14 @@ TODO
 technology
 webGL
 canvas
+
+   
+hexgrid
+   hash map of cells
+   cell has image, is_passable
+   
+   hexlibrary
+      line, distance, cube, axial
 
 
 + Noisy Neighbours

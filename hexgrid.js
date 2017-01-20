@@ -111,6 +111,9 @@ function HEX() {
       this.getHash = function () {
          return this.axial.hash();
       };
+
+      this.wall = false;
+      this.colour = '#d0d0d0';
    }
 
 
@@ -143,7 +146,8 @@ function HEX() {
       }
    }
 
-   function init(numberCols, numberRows) {
+
+   function init(map) {
 
       var row,
          col,
@@ -153,8 +157,10 @@ function HEX() {
          rowCols,
          halfHexSize;
 
-      numCols = numberCols;
-      numRows = numberRows;
+      console.log('map ' + map.width + 'x' + map.height);
+
+      numCols = map.width;
+      numRows = map.height;
       hexSize = 36;
       halfHexSize = hexSize / 2;
 
@@ -192,6 +198,12 @@ function HEX() {
             };
 
             cells[cell.getHash()] = cell;
+
+            if (map.walls.includes(cell.getHash())) {
+               cell.wall = true;
+               cell.colour = '#d0ffd0';
+
+            }
          }
       }
    }
@@ -267,18 +279,33 @@ function HEX() {
    }
 
    function drawHexes(ctx) {
-      var i,
-         p;
+      var name,
+         metrics;
 
       ctx.lineWidth = 1;
-      ctx.strokeStyle = 'black';
-      ctx.fillStyle = '#b0b0b0';
 
       each(function (cell) {
          drawHexPath(ctx, cell);
 
+         ctx.strokeStyle = 'black';
+         ctx.fillStyle = cell.colour;
          ctx.fill();
          ctx.stroke();
+
+         ctx.strokeStyle = '#606060';
+         ctx.textAlign = 'center';
+         ctx.textBaseline = 'middle';
+         ctx.font = 'extra-expanded 14px sans serif';
+         ctx.strokeText(cell.getHash(), cell.centerxy.x, cell.centerxy.y);
+
+//         name = cell.getHash();
+//         metrics = ctx.measureText(name);
+//
+//         ctx.strokeText(
+//            name,
+//            cell.centerxy.x - (metrics.width / 2),
+//            cell.centerxy.y - (metrics.h``)
+//         );
 
          // draw centre
          //ctx.fillStyle = '#000000';

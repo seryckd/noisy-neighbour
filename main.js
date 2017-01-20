@@ -1,5 +1,5 @@
 /*jslint browser: true, devel: true*/
-/*globals IMAGES,HEX,UTILS,PLAYER*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS*/
 
 /*
  * Control Scheme
@@ -240,6 +240,9 @@ NOISY.render = function (canvas, interval) {
       });
    }
 
+   // ctx.clip(); drawImage()
+   //ctx.drawImage(NOISY.images.image('rock'), 100, 100);
+
    // reset current transformation matrix to the identity matrix
    // (clears the ctx.translate())
    ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -256,6 +259,7 @@ NOISY.run = function () {
 
    NOISY.images = new IMAGES();
    NOISY.images.load("player", "images/ball.png");
+   NOISY.images.load("rock", "images/earth.png");
 
    canvas = document.createElement("canvas");
 
@@ -268,7 +272,7 @@ NOISY.run = function () {
 
    NOISY.hexgrid = new HEX();
 
-   NOISY.hexgrid.init(16, 16);
+   NOISY.hexgrid.init(MAPS.one);
 
    NOISY.players[0] = new PLAYER();
    // TODO: how to discover hexagon cell?
