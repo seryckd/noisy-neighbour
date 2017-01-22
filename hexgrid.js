@@ -112,6 +112,9 @@ function HEX() {
          return this.axial.hash();
       };
 
+      this.isWall = function () {
+         return this.wall;
+      };
       this.wall = false;
       this.colour = '#d0d0d0';
    }
@@ -317,6 +320,58 @@ function HEX() {
       return cells[hash];
    }
 
+
+
+   // ---------------------------------------------
+
+   function cube_exists(cube) {
+      return getCell(cube_to_axial(cube)) !== undefined;
+   }
+
+   function cube_directions() {
+      return [
+         new Cube(1, -1, 0),
+         new Cube(1, 0, -1),
+         new Cube(0, 1, -1),
+         new Cube(-1, 1, 0),
+         new Cube(-1, 0, 1),
+         new Cube(0, -1, 1)
+      ];
+   }
+
+   // params
+   // Cube l
+   // Cube r
+   function cube_add(l, r) {
+      return new Cube(
+         l.x + r.x,
+         l.y + l.y,
+         l.z + r.z
+      );
+   }
+
+   // Params
+   // Cell c
+   // Returns Cell[]
+   function adjacent(c) {
+      var center = axial_to_cube(c.axial),
+         cell,
+         list = [];
+
+      cube_directions().forEach(function (direction) {
+
+         cell = getCell(
+            cube_to_axial(cube_add(center, direction)).hash()
+         );
+
+         if (cell !== undefined) {
+            list.push(cell);
+         }
+      });
+
+      return list;
+   }
+
    // ---------------------------------------------
 
 
@@ -412,6 +467,15 @@ function HEX() {
 
    // ---------------------------------------------
 
+   // Cell start
+   // Cell end
+   function distance(start, end) {
+      return cube_distance(
+         axial_to_cube(start.axial),
+         axial_to_cube(end.axial)
+      );
+   }
+
    return {
       // methods
       init: init,
@@ -421,6 +485,8 @@ function HEX() {
       drawHexPath: drawHexPath,
       getCell: getCell,
       line: line,
+      distance: distance,
+      adjacent: adjacent,
 
       // expose in developer tools
       cells: cells,

@@ -1,5 +1,5 @@
 /*jslint browser: true, devel: true*/
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING*/
 
 /*
  * Control Scheme
@@ -79,8 +79,10 @@ NOISY.mousemove = function (canvas) {
 
          if (NOISY.mode === MODE_ACTION) {
 
-            if (NOISY.selectedCells[0] !== cell) {
-               NOISY.selectedCells = NOISY.hexgrid.line(NOISY.selectedCells[0], cell);
+            if (NOISY.selectedCells[0] !== cell && !cell.isWall()) {
+//               NOISY.selectedCells = NOISY.hexgrid.line(NOISY.selectedCells[0], cell);
+               NOISY.selectedCells = new PATHFINDING(NOISY.hexgrid).findPath(NOISY.selectedCells[0], cell);
+//               new PATHFINDING(NOISY.hexgrid).findPath(NOISY.selectedCells[0], cell);
             }
          }
 
