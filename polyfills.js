@@ -7,9 +7,9 @@
       window.performance = {};
    }
 
-   Date.now = (Date.now || function () { // thanks IE8
+   Date.now = Date.now || function () { // thanks IE8
       return new Date().getTime();
-   });
+   };
 
    if ("now" in window.performance === false) {
 

@@ -1,4 +1,3 @@
-/*jslint browser: true, devel: true*/
 /*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING*/
 
 /*
@@ -69,8 +68,7 @@ NOISY.mousemove = function (canvas) {
    "use strict";
 
    return function (e) {
-      var cell = NOISY.coordsToCell(canvas, e),
-         line;
+      var cell = NOISY.coordsToCell(canvas, e);
 
       if (cell !== null) {
 
@@ -202,15 +200,10 @@ NOISY.update = function (interval) {
 // - overlaying canvasses
 //   <canvas id="bg" width="640" height="480" style="position: absolute; z-index: 0"></canvas>
 //   <canvas id="fg" width="640" height="480" style="position: absolute; z-index: 1"></canvas>
-NOISY.render = function (canvas, interval) {
+NOISY.render = function (canvas /*, interval*/) {
    "use strict";
 
-   var ctx,
-      digitWidth = 10,
-      spos,
-      count,
-      text = 'say hello',
-      cell;
+   var ctx;
 
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");

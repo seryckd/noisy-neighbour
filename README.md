@@ -6,7 +6,7 @@ TODO
 * _scroll it with keys (done)_
 * _character moves around grid (done)_
 * _player moves towards clicked hex 1 hex at a time (done)_
-* add walls scenery
+* _add walls scenery (done)_
 * track movement points
 * button for end turn
 * melee

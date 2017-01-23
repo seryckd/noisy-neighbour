@@ -1,4 +1,5 @@
-/*jslint devel: true*/
+/* exported PLAYER */
+
 function PLAYER() {
    "use strict";
 

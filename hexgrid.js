@@ -1,4 +1,5 @@
-/*jslint devel: true*/
+/* exported HEX */
+
 /* HEX Module
  * Refer to http://www.redblobgames.com/grids/hexagons/
  *
@@ -157,7 +158,6 @@ function HEX() {
          q,
          r,
          cell,
-         rowCols,
          halfHexSize;
 
       console.log('map ' + map.width + 'x' + map.height);
@@ -242,13 +242,13 @@ function HEX() {
       // http://www.redblobgames.com/grids/hexagons
 
       if (isFlatTop) {
-         y1 = (y - (hexPixelHeight / 2)) / hexPixelHeight;
+         y1 = (y - hexPixelHeight / 2) / hexPixelHeight;
          t1 = x / hexSize;
          t2 = Math.floor(y1 + t1);
          q = Math.floor((Math.floor(t1 - y1) + t2) / 3);
          r = Math.floor((Math.floor(2 * y1 + 1) + t2) / 3) - q;
       } else {
-         x1 = (x - (hexPixelWidth / 2)) / hexPixelWidth;
+         x1 = (x - hexPixelWidth / 2) / hexPixelWidth;
          t1 = y / hexSize;
          t2 = Math.floor(x1 + t1);
          r = Math.floor((Math.floor(t1 - x1) + t2) / 3);
@@ -282,8 +282,6 @@ function HEX() {
    }
 
    function drawHexes(ctx) {
-      var name,
-         metrics;
 
       ctx.lineWidth = 1;
 
@@ -323,10 +321,6 @@ function HEX() {
 
 
    // ---------------------------------------------
-
-   function cube_exists(cube) {
-      return getCell(cube_to_axial(cube)) !== undefined;
-   }
 
    function cube_directions() {
       return [

@@ -1,3 +1,5 @@
+/* exported IMAGES */
+
 function IMAGES() {
    "use strict";
 

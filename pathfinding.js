@@ -1,4 +1,4 @@
-/*jslint devel: true*/
+/* exported PATHFINDING */
 
 // Implementation of A* using distance between cells as heuristic
 // Every cell has same G value
@@ -6,34 +6,34 @@
 //
 
 function PATHFINDING(hexgridf) {
-   "use strict";
+  "use strict";
 
    var hexgrid = hexgridf,
       openMap = new Map(),
       closeMap = new Map(),
       mapCellToNodes = {};
 
+//   function outputCells(cells) {
+//      var o = '';
+//
+//      cells.forEach(function (c) {
+//         o += c.getHash();
+//         o += ',';
+//      });
+//
+//      return o;
+//   }
 
-   function outputCells(cells) {
-      var o = '';
-
-      cells.forEach(function (c) {
-         o += c.getHash();
-         o += ',';
-      });
-
-      return o;
-   }
-   function outputNodes(nodes) {
-      var o = '';
-
-      for (var value of nodes.values()) {
-         o += value.getHash();
-         o += ',';
-      }
-
-      return o;
-   }
+//   function outputNodes(nodes) {
+//      var o = '';
+//
+//      for (var value of nodes.values()) {
+//         o += value.getHash();
+//         o += ',';
+//      }
+//
+//      return o;
+//   }
 
    function Node(cell) {
       this.cell = cell;
@@ -161,7 +161,6 @@ function PATHFINDING(hexgridf) {
    // return: array of cells or null for not possible
    function findPath(startCell, endCell) {
       var currentNode,
-         adjacentCells,
          endNode = to_node(endCell),
          path = [];
 
