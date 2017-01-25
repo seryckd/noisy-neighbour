@@ -2,8 +2,11 @@
 
 // Implementation of A* using distance between cells as heuristic
 // Every cell has same G value
+// http://www.policyalmanac.org/games/aStarTutorial.htm
 // TODO add movement cost to hexgrid.Cell.
 //
+// Should also look here
+// http://theory.stanford.edu/~amitp/GameProgramming/
 
 function PATHFINDING(hexgridf) {
   "use strict";
@@ -188,8 +191,51 @@ function PATHFINDING(hexgridf) {
       return path;
    }
 
+   // Breadth First Search
+   // Params
+   // Cell startCell
+   // int movePoints
+   // Return Map<Cell> cells that can be reached
+   function findReachable(startCell, movePoints) {
+
+      var frontier = [],
+          reachable = new Map(),
+          node = to_node(startCell),
+          next,
+          neighbours;
+
+      frontier.push(node);
+      reachable.set(node.getHash(), node.cell);
+
+      while (frontier.length !== 0) {
+         node = frontier.shift();
+
+         neighbours = hexgrid.adjacent(node.cell);
+         for (let index=0; index<neighbours.length; ++index) {
+            next = to_node(neighbours[index]);
+
+            if (reachable.has(next.getHash()) || !next.isWalkable()) {
+               continue;
+            }
+
+            next.parent = node;
+
+            // TODO needs to be actual movement cost of cell
+            next.G = node.G + 1;
+
+            if (next.G <= movePoints) {
+               frontier.push(next);
+               reachable.set(next.getHash(), next.cell);
+            }
+         }
+      }
+
+      return reachable;
+   }
+
    return {
-      findPath: findPath
+      findPath: findPath,
+      findReachable: findReachable
    };
 
 }

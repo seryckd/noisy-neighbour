@@ -23,10 +23,16 @@ NOISY.mode = MODE_SELECT;
 
 // always the cell under the mouse
 NOISY.mouseOverCell = null;
-// select mode - empty
-// action mode - head is source, tail is target (same as mouseOverCell)
-NOISY.selectedCells = [];
 
+// Only used in ACTION mode
+// Cells that are marked as reachable in this turn
+NOISY.reachableMapCells = null;
+
+// Only used in ACTION mode
+// Subset of reachableCells
+// Cells that are marked as the selected path
+// head is source, tail is target (which is always the same as mouseOverCell)
+NOISY.selectedPathCells = [];
 
 NOISY.viewport = {
    x : 0,
@@ -40,7 +46,8 @@ NOISY.keymap = {
    65 : 'left',         // 'a'
    68 : 'right',        // 'd'
    87 : 'up',           // 'w'
-   83 : 'down'          // 's'
+   83 : 'down',         // 's'
+   32 : 'space'         // ' '
 };
 
 // Holds the keys currently pressed
@@ -77,10 +84,10 @@ NOISY.mousemove = function (canvas) {
 
          if (NOISY.mode === MODE_ACTION) {
 
-            if (NOISY.selectedCells[0] !== cell && !cell.isWall()) {
-//               NOISY.selectedCells = NOISY.hexgrid.line(NOISY.selectedCells[0], cell);
-               NOISY.selectedCells = new PATHFINDING(NOISY.hexgrid).findPath(NOISY.selectedCells[0], cell);
-//               new PATHFINDING(NOISY.hexgrid).findPath(NOISY.selectedCells[0], cell);
+            if (NOISY.players[0].getCell() !== cell &&
+                !cell.isWall() &&
+                NOISY.reachableMapCells.has(cell.getHash())) {
+               NOISY.selectedPathCells = new PATHFINDING(NOISY.hexgrid).findPath(NOISY.players[0].getCell(), cell);
             }
          }
 
@@ -102,14 +109,15 @@ NOISY.click = function (canvas) {
          if (NOISY.mode === MODE_SELECT) {
             if (NOISY.players[0].getCell() === cell) {
                NOISY.mode = MODE_ACTION;
-               NOISY.selectedCells = [cell];
+               NOISY.reachableMapCells = new PATHFINDING(NOISY.hexgrid)
+                  .findReachable(cell, NOISY.players[0].getCurAP());
             }
          } else {
             // action
 
-            if (cell !== NOISY.selectedCells[0]) {
+            if (cell !== NOISY.selectedPathCells[0]) {
                NOISY.mode = MODE_SELECT;
-               NOISY.players[0].movePath(NOISY.selectedCells);
+               NOISY.players[0].setMovePath(NOISY.selectedPathCells);
             }
          }
 
@@ -117,51 +125,63 @@ NOISY.click = function (canvas) {
 
          console.log("no cell");
          NOISY.mode = MODE_SELECT;
-         NOISY.selectedCells = [];
+         NOISY.selectedPathCells = [];
 
          NOISY.targetCell = null;
       }
    };
 };
 
-NOISY.keypress = function () {
+//NOISY.keypress = function () {
+//   "use strict";
+//
+//   var acc = 2,
+//      lastkey = 0;
+//
+//   return function (e) {
+//
+//      if (lastkey === e.keyCode) {
+//         acc += 1.5;
+//
+//         if (acc > 15) {
+//            acc = 15;
+//         }
+//      } else {
+//         acc = 2;
+//      }
+//
+//      lastkey = e.keyCode;
+//
+//      // a 97
+//      if (e.keyCode === 97) {
+//         NOISY.viewport.x -= NOISY.viewport.acc;
+//
+//      // d
+//      } else if (e.keyCode === 100) {
+//         NOISY.viewport.x += NOISY.viewport.acc;
+//
+//      // w
+//      } else if (e.keyCode === 119) {
+//         NOISY.viewport.y -= NOISY.viewport.acc;
+//
+//      // s
+//      } else if (e.keyCode === 115) {
+//         NOISY.viewport.y += NOISY.viewport.acc;
+//
+//      // space
+//      } else if (e.keyCode === ' ') {
+//         NOISY.endTurn();
+//      }
+//
+//   };
+//};
+
+NOISY.endTurn = function () {
    "use strict";
-
-   var acc = 2,
-      lastkey = 0;
-
-   return function (e) {
-
-      if (lastkey === e.keyCode) {
-         acc += 1.5;
-
-         if (acc > 15) {
-            acc = 15;
-         }
-      } else {
-         acc = 2;
-      }
-
-      lastkey = e.keyCode;
-
-      // a 97
-      if (e.keyCode === 97) {
-         NOISY.viewport.x -= NOISY.viewport.acc;
-
-      // d
-      } else if (e.keyCode === 100) {
-         NOISY.viewport.x += NOISY.viewport.acc;
-
-      // w
-      } else if (e.keyCode === 119) {
-         NOISY.viewport.y -= NOISY.viewport.acc;
-
-      // s
-      } else if (e.keyCode === 115) {
-         NOISY.viewport.y += NOISY.viewport.acc;
-      }
-
-   };
+   NOISY.players.forEach(function (p) {
+      console.log('new turn pressed');
+      p.newTurn();
+   });
 };
 
 NOISY.update = function (interval) {
@@ -192,6 +212,11 @@ NOISY.update = function (interval) {
    NOISY.players.forEach(function (p) {
       p.update(interval);
    });
+
+   // TODO need to control when endTurn is called
+   if (NOISY.keydown.space === true) {
+      NOISY.endTurn();
+   }
 };
 
 // Ideas to improve performance
@@ -228,11 +253,32 @@ NOISY.render = function (canvas /*, interval*/) {
       }
    } else {
 
-      NOISY.selectedCells.forEach(function (c) {
-         NOISY.hexgrid.drawHexPath(ctx, c);
-         ctx.strokeStyle = '#ff0000';
-         ctx.stroke();
+      // ACTION mode
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      NOISY.reachableMapCells.forEach(function (c) {
+         ctx.strokeRect(
+            c.centerxy.x - 10,
+            c.centerxy.y - 10,
+            20,
+            20);
       });
+
+      ctx.fillStyle = '#ffffff';
+      NOISY.selectedPathCells.forEach(function (c) {
+         ctx.fillRect(
+            c.centerxy.x - 10,
+            c.centerxy.y - 10,
+            20,
+            20);
+      });
+
+//      NOISY.selectedCells.forEach(function (c) {
+//         NOISY.hexgrid.drawHexPath(ctx, c);
+//         ctx.strokeStyle = '#ff0000';
+//         ctx.stroke();
+//      });
    }
 
    // ctx.clip(); drawImage()
@@ -256,11 +302,12 @@ NOISY.run = function () {
    NOISY.images.load("player", "images/ball.png");
    NOISY.images.load("rock", "images/earth.png");
 
-   canvas = document.createElement("canvas");
+   canvas = document.getElementById("viewport");
+   //canvas = document.createElement("canvas");
 
    canvas.width = 400;
    canvas.height = 400;
-   document.body.appendChild(canvas);
+  // document.body.appendChild(canvas);
 
    //   NOISY.images = new IMAGES();
    //   NOISY.images.load('beach', 'beach4.png');

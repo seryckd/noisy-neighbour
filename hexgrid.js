@@ -291,7 +291,7 @@ function HEX() {
          ctx.strokeStyle = 'black';
          ctx.fillStyle = cell.colour;
          ctx.fill();
-         ctx.stroke();
+         //ctx.stroke();
 
          ctx.strokeStyle = '#606060';
          ctx.textAlign = 'center';
@@ -313,6 +313,7 @@ function HEX() {
          //ctx.fillRect(cell.centerxy.x, cell.centerxy.y, 1, 1);
       });
    }
+
 
    function getCell(hash) {
       return cells[hash];

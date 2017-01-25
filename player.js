@@ -10,7 +10,7 @@ function PLAYER() {
       elapsedTime = 0,
       // x,y position
       centerxy,
-      curAP,         // current action points
+      curAP = 3,         // current action points
       turnAP = 3;        // total action points available this turn
 
    function copyCenter(cell) {
@@ -20,7 +20,10 @@ function PLAYER() {
       };
    }
 
-   function movePath(apath) {
+   //
+   // Params
+   // Cell[] array of cells to move through
+   function setMovePath(apath) {
       path = apath;
       // first element is the same as the currentcell
       path.shift();
@@ -66,6 +69,11 @@ function PLAYER() {
             currentCell = path.shift();
             centerxy = copyCenter(currentCell);
             elapsedTime = 0;
+            curAP -= 1;
+
+            if (curAP === 0) {
+               path = [];
+            }
          } else {
             // Move from current to next in path
             centerxy.x = lerp(currentCell.centerxy.x, path[0].centerxy.x, elapsedTime / speed);
@@ -85,11 +93,18 @@ function PLAYER() {
          50
       );
 
+      // rectangle
+      // points in rectangle
+
+      ctx.strokeText(curAP,
+                    centerxy.x,
+                    centerxy.y);
+
    }
 
    return {
       setStartPos: setStartPos,
-      movePath: movePath,
+      setMovePath: setMovePath,
       update: update,
       render: render,
       getCell: getCell,
