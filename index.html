@@ -5,15 +5,27 @@
       canvas {
          border: 1px solid black;
       }
+      button {
+         background-color: coral;
+         border: none;
+         font-size: 16px;
+         text-align: center;
+         padding: 10px 20px;
+      }
    </style>
 </head>
 
 <body>
    <h1>Noisy Neighbours</h1>
+   <div><button type="button" onclick="NOISY.endTurn()">End Turn</button></div>
+   <br/>
+   <div><canvas id="viewport"/></div>
    <script type="text/javascript" src="polyfills.js"></script>
    <script type="text/javascript" src="player.js"></script>
    <script type="text/javascript" src="utils.js"></script>
    <script type="text/javascript" src="image.js"></script>
+   <script type="text/javascript" src="maps.js"></script>
    <script type="text/javascript" src="hexgrid.js"></script>
+   <script type="text/javascript" src="pathfinding.js"></script>
    <script type="text/javascript" src="main.js"></script>
 </body>

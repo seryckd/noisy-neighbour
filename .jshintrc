@@ -1,0 +1,25 @@
+{
+   "esversion": 6,
+
+   // Enforcing Options
+   "curly": true,
+   "eqeqeq": true,
+   "forin": true,
+   "funcscope": true,
+   "futurehostile": true,
+   "noarg": true,
+   "nocomma": true,
+   "nonbsp": true,
+   "nonew": true,
+   "singleGroups": true,
+   "strict": true,
+   "undef": true,
+   "unused": true,
+
+   // Relaxing Options
+
+   // Environments
+   "devel": true,
+   "browser": true
+
+}
