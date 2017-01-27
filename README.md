@@ -1,6 +1,6 @@
-In Progress
+## In Progress
    
-TODO
+## TODO
 
 * _hex grid (done)_
 * _input selects grid (done)_
@@ -18,8 +18,12 @@ TODO
 * moving opponents heat seeking AI
 * 
 
+## JavaScript
 
-++ control scheme
+let is not available in Safari9
+should be using a transpiler but haven't set up a toolchain yet
+
+## control scheme
 
 click to select unit
   cells that can be moved to with current action points are highlighted with 'can move to' overlay
@@ -46,16 +50,8 @@ technology
 webGL
 canvas
 
-   
-hexgrid
-   hash map of cells
-   cell has image, is_passable
-   
-   hexlibrary
-      line, distance, cube, axial
 
-
-+ Noisy Neighbours
+## Noisy Neighbours
 
 
 Dwarves vs Goblins & friends.

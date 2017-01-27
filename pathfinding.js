@@ -205,7 +205,8 @@ function PATHFINDING(hexgridf) {
           reachable = new Map(),
           node = to_node(startCell),
           next,
-          neighbours;
+          neighbours,
+          index;
 
       frontier.push(node);
       //reachable.set(node.getHash(), node.cell);
@@ -214,7 +215,7 @@ function PATHFINDING(hexgridf) {
          node = frontier.shift();
 
          neighbours = hexgrid.adjacent(node.cell);
-         for (let index=0; index<neighbours.length; ++index) {
+         for (index=0; index<neighbours.length; ++index) {
             next = to_node(neighbours[index]);
 
             if (reachable.has(next.getHash()) ||
