@@ -1,6 +1,5 @@
 In Progress
-  - overlays for selection
-
+   
 TODO
 
 * _hex grid (done)_
@@ -12,7 +11,7 @@ TODO
 * _add walls scenery (done)_
 * _track movement points (done)_
 * _button for end turn (done)_
-* selected overlays
+* _selected overlays (done)_
 * static opponents
 * target overlays
 * melee, range combat

@@ -56,7 +56,8 @@ function HEX() {
       numRows,          // Number of rows in the grid
       hexPixelWidth,    // width of hex in pixels
       hexPixelHeight,   // height of hex in pixels
-      hexSize;          // length of hexagon size
+      hexSize,          // length of hexagon size
+      isShowIds = true; //
 
 
    // Hex represented in axial coords
@@ -213,7 +214,8 @@ function HEX() {
 
    // Return (x,y) coords of one of the hex corners.
    // angle: corner number (0-5)
-   function hexCorner(center, angle) {
+   // size: size of hex
+   function hexCorner(center, angle, size) {
       var angle_deg = 60 * angle,
          angle_rad;
 
@@ -224,8 +226,8 @@ function HEX() {
       angle_rad = Math.PI / 180 * angle_deg;
 
       return {
-         x: center.x + hexSize * Math.cos(angle_rad),
-         y: center.y + hexSize * Math.sin(angle_rad)
+         x: center.x + size * Math.cos(angle_rad),
+         y: center.y + size * Math.sin(angle_rad)
       };
    }
 
@@ -264,7 +266,7 @@ function HEX() {
       return hex;
    }
 
-   function drawHexPath(ctx, cell) {
+   function drawHexPath(ctx, cell, size) {
 
       var p,
          i;
@@ -274,43 +276,39 @@ function HEX() {
       ctx.moveTo(p.x, p.y);
 
       for (i = 0; i <= 5; i = i + 1) {
-         p = hexCorner(cell.centerxy, i);
+         p = hexCorner(cell.centerxy, i, size);
          ctx.lineTo(p.x, p.y);
       }
 
       ctx.closePath();
    }
 
-   function drawHexes(ctx) {
+   // Render the map into the context
+   //
+   // Params
+   // Context
+   function render(ctx) {
 
       ctx.lineWidth = 1;
 
+      if (isShowIds) {
+         ctx.textAlign = 'center';
+         ctx.textBaseline = 'middle';
+         ctx.font = 'extra-expanded 14px sans serif';
+      }
+
       each(function (cell) {
-         drawHexPath(ctx, cell);
+         drawHexPath(ctx, cell, hexSize);
 
          ctx.strokeStyle = 'black';
          ctx.fillStyle = cell.colour;
          ctx.fill();
          //ctx.stroke();
 
-         ctx.strokeStyle = '#606060';
-         ctx.textAlign = 'center';
-         ctx.textBaseline = 'middle';
-         ctx.font = 'extra-expanded 14px sans serif';
-         ctx.strokeText(cell.getHash(), cell.centerxy.x, cell.centerxy.y);
-
-//         name = cell.getHash();
-//         metrics = ctx.measureText(name);
-//
-//         ctx.strokeText(
-//            name,
-//            cell.centerxy.x - (metrics.width / 2),
-//            cell.centerxy.y - (metrics.h``)
-//         );
-
-         // draw centre
-         //ctx.fillStyle = '#000000';
-         //ctx.fillRect(cell.centerxy.x, cell.centerxy.y, 1, 1);
+         if (isShowIds) {
+            ctx.strokeStyle = '#808080';
+            ctx.strokeText(cell.getHash(), cell.centerxy.x, cell.centerxy.y);
+         }
       });
    }
 
@@ -319,6 +317,13 @@ function HEX() {
       return cells[hash];
    }
 
+   function getShowIds() {
+      return isShowIds;
+   }
+
+   function setShowIds(v) {
+      isShowIds = v;
+   }
 
 
    // ---------------------------------------------
@@ -476,12 +481,15 @@ function HEX() {
       init: init,
       each: each,
       selectHex: selectHex,
-      drawHexes: drawHexes,
+      render: render,
       drawHexPath: drawHexPath,
       getCell: getCell,
       line: line,
       distance: distance,
       adjacent: adjacent,
+
+      getShowIds: getShowIds,
+      setShowIds: setShowIds,
 
       // expose in developer tools
       cells: cells,

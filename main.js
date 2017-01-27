@@ -46,12 +46,13 @@ NOISY.keymap = {
    65 : 'left',         // 'a'
    68 : 'right',        // 'd'
    87 : 'up',           // 'w'
-   83 : 'down',         // 's'
-   32 : 'space'         // ' '
+   83 : 'down'          // 's'
 };
 
 // Holds the keys currently pressed
 NOISY.keydown = {};
+
+NOISY.isShowIds = true;
 
 // Convert event coords to a cell
 // Return: cell | null
@@ -87,7 +88,10 @@ NOISY.mousemove = function (canvas) {
             if (NOISY.players[0].getCell() !== cell &&
                 !cell.isWall() &&
                 NOISY.reachableMapCells.has(cell.getHash())) {
+
                NOISY.selectedPathCells = new PATHFINDING(NOISY.hexgrid).findPath(NOISY.players[0].getCell(), cell);
+            } else {
+               NOISY.selectedPathCells = [];
             }
          }
 
@@ -115,7 +119,7 @@ NOISY.click = function (canvas) {
          } else {
             // action
 
-            if (cell !== NOISY.selectedPathCells[0]) {
+            if (cell !== NOISY.players[0].getCell()) {
                NOISY.mode = MODE_SELECT;
                NOISY.players[0].setMovePath(NOISY.selectedPathCells);
             }
@@ -131,50 +135,6 @@ NOISY.click = function (canvas) {
       }
    };
 };
-
-//NOISY.keypress = function () {
-//   "use strict";
-//
-//   var acc = 2,
-//      lastkey = 0;
-//
-//   return function (e) {
-//
-//      if (lastkey === e.keyCode) {
-//         acc += 1.5;
-//
-//         if (acc > 15) {
-//            acc = 15;
-//         }
-//      } else {
-//         acc = 2;
-//      }
-//
-//      lastkey = e.keyCode;
-//
-//      // a 97
-//      if (e.keyCode === 97) {
-//         NOISY.viewport.x -= NOISY.viewport.acc;
-//
-//      // d
-//      } else if (e.keyCode === 100) {
-//         NOISY.viewport.x += NOISY.viewport.acc;
-//
-//      // w
-//      } else if (e.keyCode === 119) {
-//         NOISY.viewport.y -= NOISY.viewport.acc;
-//
-//      // s
-//      } else if (e.keyCode === 115) {
-//         NOISY.viewport.y += NOISY.viewport.acc;
-//
-//      // space
-//      } else if (e.keyCode === ' ') {
-//         NOISY.endTurn();
-//      }
-//
-//   };
-//};
 
 NOISY.endTurn = function () {
    "use strict";
@@ -213,10 +173,15 @@ NOISY.update = function (interval) {
       p.update(interval);
    });
 
+   // -------------------------------------------------------------------------
+   // Misc
+
    // TODO need to control when endTurn is called
    if (NOISY.keydown.space === true) {
       NOISY.endTurn();
    }
+
+
 };
 
 // Ideas to improve performance
@@ -237,48 +202,36 @@ NOISY.render = function (canvas /*, interval*/) {
    ctx.clearRect(0, 0, canvas.width, canvas.height);
    ctx.translate(NOISY.viewport.x, NOISY.viewport.y);
 
-   NOISY.hexgrid.drawHexes(ctx);
+   NOISY.hexgrid.render(ctx);
 
    // draw player
    NOISY.players.forEach(function (p) {
       p.render(ctx, NOISY.images);
    });
 
-   if (NOISY.mode === MODE_SELECT) {
-      // mouse over cell
-      if (NOISY.mouseOverCell !== null) {
-         NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell);
-         ctx.strokeStyle = '#00ff00';
-         ctx.stroke();
-      }
-   } else {
+   // mouse over cell
+   if (NOISY.mouseOverCell !== null) {
+      NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell, 36);
+      ctx.strokeStyle = '#00ff00';
+      ctx.stroke();
+   }
+
+   if (NOISY.mode === MODE_ACTION ) {
 
       // ACTION mode
 
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2;
       NOISY.reachableMapCells.forEach(function (c) {
-         ctx.strokeRect(
-            c.centerxy.x - 10,
-            c.centerxy.y - 10,
-            20,
-            20);
+         NOISY.hexgrid.drawHexPath(ctx, c, 28);
+         ctx.stroke();
       });
 
       ctx.fillStyle = '#ffffff';
       NOISY.selectedPathCells.forEach(function (c) {
-         ctx.fillRect(
-            c.centerxy.x - 10,
-            c.centerxy.y - 10,
-            20,
-            20);
+         NOISY.hexgrid.drawHexPath(ctx, c, 10);
+         ctx.fill();
       });
-
-//      NOISY.selectedCells.forEach(function (c) {
-//         NOISY.hexgrid.drawHexPath(ctx, c);
-//         ctx.strokeStyle = '#ff0000';
-//         ctx.stroke();
-//      });
    }
 
    // ctx.clip(); drawImage()
@@ -335,6 +288,22 @@ NOISY.run = function () {
    // Canvas can not get focus so can not listen for keypresses
    window.addEventListener("keyup", function (e) {
       NOISY.keydown[NOISY.keymap[e.keyCode]] = false;
+   });
+
+   // Canvas can not get focus so can not listen for keypresses
+   window.addEventListener("keypress", function (e) {
+      switch (e.keyCode) {
+         case 32 :   // space
+            NOISY.endTurn();
+            break;
+
+         case 110 :  // 'n'
+            NOISY.hexgrid.setShowIds(!NOISY.hexgrid.getShowIds());
+            break;
+
+         default:
+            break;
+      }
    });
 
    function frame() {

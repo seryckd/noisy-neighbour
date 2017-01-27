@@ -25,8 +25,6 @@ function PLAYER() {
    // Cell[] array of cells to move through
    function setMovePath(apath) {
       path = apath;
-      // first element is the same as the currentcell
-      path.shift();
 
       //currentCell = path[path.length - 1];
       centerxy = copyCenter(currentCell);

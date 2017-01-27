@@ -154,6 +154,9 @@ function PATHFINDING(hexgridf) {
          node = node.parent;
       }
 
+      // Remove the starting cell as it is the start cell
+      path.shift();
+
       return path;
    }
 
@@ -195,7 +198,7 @@ function PATHFINDING(hexgridf) {
    // Params
    // Cell startCell
    // int movePoints
-   // Return Map<Cell> cells that can be reached
+   // Return Map<Cell> cells that can be reached, excluding the start cell
    function findReachable(startCell, movePoints) {
 
       var frontier = [],
@@ -205,7 +208,7 @@ function PATHFINDING(hexgridf) {
           neighbours;
 
       frontier.push(node);
-      reachable.set(node.getHash(), node.cell);
+      //reachable.set(node.getHash(), node.cell);
 
       while (frontier.length !== 0) {
          node = frontier.shift();
@@ -214,7 +217,9 @@ function PATHFINDING(hexgridf) {
          for (let index=0; index<neighbours.length; ++index) {
             next = to_node(neighbours[index]);
 
-            if (reachable.has(next.getHash()) || !next.isWalkable()) {
+            if (reachable.has(next.getHash()) ||
+                !next.isWalkable() ||
+                next.getHash() === startCell.getHash()) {
                continue;
             }
 
