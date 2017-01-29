@@ -51,7 +51,7 @@ function PATHFINDING(hexgridf) {
       };
 
       this.isWalkable = function () {
-         return !this.cell.isWall();
+         return !this.cell.isWall() && !this.cell.hasActor();
       };
 
       this.getHash = function () {
@@ -195,6 +195,9 @@ function PATHFINDING(hexgridf) {
    }
 
    // Breadth First Search
+   // Return all cells that can be reached from the start cells within
+   // a given range. Stop if we get to a Wall or another Actor.
+   //
    // Params
    // Cell startCell
    // int movePoints
@@ -239,9 +242,27 @@ function PATHFINDING(hexgridf) {
       return reachable;
    }
 
+   // Return an array of cells that contain actors with the given range
+   function findTargetable(startCell, actors, range) {
+
+      var cells = [],
+         filtered = actors.filter(function (a) {
+            return hexgrid.distance(startCell, a.getCell()) <= range;
+         });
+
+      filtered.forEach(function (a) {
+         cells.push(a.getCell());
+      });
+
+      return cells.filter(function (c) {
+         return hexgrid.hasLineOfSight(startCell, c);
+      });
+   }
+
    return {
       findPath: findPath,
-      findReachable: findReachable
+      findReachable: findReachable,
+      findTargetable: findTargetable
    };
 
 }

@@ -12,11 +12,11 @@
 * _track movement points (done)_
 * _button for end turn (done)_
 * _selected overlays (done)_
-* static opponents
-* target overlays
+* _static opponents (done)_
+* _target overlays (done)_
 * melee, range combat
 * moving opponents heat seeking AI
-* 
+* field of view
 
 ## JavaScript
 
@@ -44,6 +44,11 @@ click on something not highlighted
    remove all highlights
    deselect unit
    
+## line of sight/field of view
+current
+- loop through all possible targets checking to see if they are in range
+
+need proper field of view
 
 
 technology
@@ -94,4 +99,33 @@ stories
 	+ send units in to grab resources from defended area
 	+ defend against attacks to settlement
 	+ stealth campaigns ?  how to assign xp
-	
+
+skill tree
+
+   instead of classes, consider skills   
+   assign points to improve
+
+   range
+      - hand crossbow (one handed)
+         - crossbow
+            - heavy crossbow (two handed)
+      - grenade
+         - improved accuracy
+      - skills
+         - deadshot (doesn't miss)
+   mining equipment
+      - dynamite
+         - set trap
+         - cave-in
+         
+   melee
+      - hand axe
+         - battle axe (two handed)
+      - shield
+      - armour
+      - parry
+      
+   
+      
+   
+   

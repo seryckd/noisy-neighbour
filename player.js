@@ -1,23 +1,30 @@
 /* exported PLAYER */
 
-function PLAYER() {
+function PLAYER(startCell) {
    "use strict";
 
-   var currentCell,
+   var self = this,
+      currentCell = startCell,
       // arrays of cells to move through
       // [0] is same as currentCell
       path = [],
       elapsedTime = 0,
       // x,y position
-      centerxy,
+      centerxy = copyCenter(currentCell),
       curAP = 3,         // current action points
       turnAP = 3;        // total action points available this turn
+
+   currentCell.setActor(this);
 
    function copyCenter(cell) {
       return {
          x : cell.centerxy.x,
          y : cell.centerxy.y
       };
+   }
+
+   function getWeaponRange() {
+      return 5;
    }
 
    //
@@ -29,12 +36,6 @@ function PLAYER() {
       //currentCell = path[path.length - 1];
       centerxy = copyCenter(currentCell);
    }
-
-   function setStartPos(cell) {
-      currentCell = cell;
-      centerxy = copyCenter(currentCell);
-   }
-
 
    function getCell() {
       return currentCell;
@@ -55,7 +56,7 @@ function PLAYER() {
    //
    function update(interval) {
 
-      var speed = 0.4;
+      var speed = 0.5;
 
       if (path.length > 0) {
 
@@ -64,8 +65,13 @@ function PLAYER() {
 
          if (elapsedTime > speed) {
             // Arrived at next cell, now target the next cell in the path
+
+            currentCell.clearActor();
+
             currentCell = path.shift();
             centerxy = copyCenter(currentCell);
+            currentCell.setActor(self);
+
             elapsedTime = 0;
             curAP -= 1;
 
@@ -85,10 +91,8 @@ function PLAYER() {
 
       ctx.drawImage(
          image.image("player"),
-         centerxy.x - 25,
-         centerxy.y - 25,
-         50,
-         50
+         centerxy.x - 35,
+         centerxy.y - 35
       );
 
       // rectangle
@@ -101,15 +105,15 @@ function PLAYER() {
    }
 
    return {
-      setStartPos: setStartPos,
-      setMovePath: setMovePath,
       update: update,
       render: render,
+      setMovePath: setMovePath,
       getCell: getCell,
       newTurn: newTurn,
       getCurAP: function () {
          return curAP;
-      }
+      },
+      getWeaponRange: getWeaponRange
    };
 }
 

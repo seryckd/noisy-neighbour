@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC*/
 
 /*
  * Control Scheme
@@ -29,6 +29,10 @@ NOISY.mouseOverCell = null;
 NOISY.reachableMapCells = null;
 
 // Only used in ACTION mode
+// Cells that are targetable in this turn
+NOISY.targetableMapCells = null;
+
+// Only used in ACTION mode
 // Subset of reachableCells
 // Cells that are marked as the selected path
 // head is source, tail is target (which is always the same as mouseOverCell)
@@ -39,7 +43,10 @@ NOISY.viewport = {
    y : 0
 };
 
+NOISY.selectedPlayer = null;
 NOISY.players = [];
+
+NOISY.npcs = [];
 
 // Map keypresses to actions
 NOISY.keymap = {
@@ -85,11 +92,13 @@ NOISY.mousemove = function (canvas) {
 
          if (NOISY.mode === MODE_ACTION) {
 
-            if (NOISY.players[0].getCell() !== cell &&
+            if (!cell.hasActor() &&
                 !cell.isWall() &&
                 NOISY.reachableMapCells.has(cell.getHash())) {
 
-               NOISY.selectedPathCells = new PATHFINDING(NOISY.hexgrid).findPath(NOISY.players[0].getCell(), cell);
+               NOISY.selectedPathCells = new PATHFINDING(NOISY.hexgrid)
+                  .findPath(NOISY.selectedPlayer.getCell(), cell);
+
             } else {
                NOISY.selectedPathCells = [];
             }
@@ -106,29 +115,43 @@ NOISY.click = function (canvas) {
    "use strict";
 
    return function (e) {
-      var cell = NOISY.coordsToCell(canvas, e);
+      var cell = NOISY.coordsToCell(canvas, e),
+         l,
+         p;
 
       if (cell !== null) {
 
          if (NOISY.mode === MODE_SELECT) {
-            if (NOISY.players[0].getCell() === cell) {
-               NOISY.mode = MODE_ACTION;
-               NOISY.reachableMapCells = new PATHFINDING(NOISY.hexgrid)
-                  .findReachable(cell, NOISY.players[0].getCurAP());
+
+            for (l = 0; l < NOISY.players.length; ++l) {
+               p = NOISY.players[l];
+               if (p.getCell() === cell) {
+                  NOISY.mode = MODE_ACTION;
+                  NOISY.selectedPlayer = p;
+                  NOISY.reachableMapCells = new PATHFINDING(NOISY.hexgrid)
+                     .findReachable(cell, p.getCurAP());
+
+                  NOISY.targetableMapCells = new PATHFINDING(NOISY.hexgrid)
+                     .findTargetable(cell, NOISY.npcs, NOISY.selectedPlayer.getWeaponRange());
+
+                  break;
+               }
             }
+
          } else {
             // action
 
-            if (cell !== NOISY.players[0].getCell()) {
+            if (cell !== NOISY.selectedPlayer.getCell()) {
                NOISY.mode = MODE_SELECT;
-               NOISY.players[0].setMovePath(NOISY.selectedPathCells);
+               NOISY.selectedPlayer.setMovePath(NOISY.selectedPathCells);
             }
          }
 
       } else {
 
-         console.log("no cell");
          NOISY.mode = MODE_SELECT;
+
+         NOISY.selectedPlayer = null;
          NOISY.selectedPathCells = [];
 
          NOISY.targetCell = null;
@@ -209,6 +232,10 @@ NOISY.render = function (canvas /*, interval*/) {
       p.render(ctx, NOISY.images);
    });
 
+   NOISY.npcs.forEach(function (n) {
+      n.render(ctx, NOISY.images);
+   });
+
    // mouse over cell
    if (NOISY.mouseOverCell !== null) {
       NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell, 36);
@@ -220,6 +247,8 @@ NOISY.render = function (canvas /*, interval*/) {
 
       // ACTION mode
 
+      // Reachable Cells
+
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       NOISY.reachableMapCells.forEach(function (c) {
@@ -227,19 +256,60 @@ NOISY.render = function (canvas /*, interval*/) {
          ctx.stroke();
       });
 
+      // Currently selected path in the reachable Cells
+
       ctx.fillStyle = '#ffffff';
       NOISY.selectedPathCells.forEach(function (c) {
          NOISY.hexgrid.drawHexPath(ctx, c, 10);
          ctx.fill();
       });
+
+      // Targetable cells
+
+      ctx.fillStyle = '#000000';
+      NOISY.targetableMapCells.forEach(function (c) {
+
+         ctx.strokeStyle = '#f00000';
+         ctx.beginPath();
+         ctx.arc(c.centerxy.x, c.centerxy.y, 20, 0, 2 * Math.PI);
+         ctx.moveTo(c.centerxy.x - 25, c.centerxy.y);
+         ctx.lineTo(c.centerxy.x - 15, c.centerxy.y);
+         ctx.moveTo(c.centerxy.x + 25, c.centerxy.y);
+         ctx.lineTo(c.centerxy.x + 15, c.centerxy.y);
+         ctx.moveTo(c.centerxy.x, c.centerxy.y - 25);
+         ctx.lineTo(c.centerxy.x, c.centerxy.y - 15);
+         ctx.moveTo(c.centerxy.x, c.centerxy.y + 25);
+         ctx.lineTo(c.centerxy.x, c.centerxy.y + 15);
+         ctx.stroke();
+
+         //ctx.fillRect(c.centerxy.x, c.centerxy.y, 20, 20);
+      });
    }
 
-   // ctx.clip(); drawImage()
-   //ctx.drawImage(NOISY.images.image('rock'), 100, 100);
+   // dashboard
+
+   ctx.strokeStyle = '#000000';
+   ctx.font = "24px sans serif";
+   ctx.lineWidth = 1;
+   ctx.strokeText(NOISY.mode, 10, 10);
 
    // reset current transformation matrix to the identity matrix
    // (clears the ctx.translate())
    ctx.setTransform(1, 0, 0, 1, 0, 0);
+};
+
+NOISY.loadMap = function (map) {
+   "use strict";
+
+   NOISY.hexgrid.init(MAPS.one);
+
+   map.dwarf.forEach(function (d) {
+      NOISY.players.push(new PLAYER(NOISY.hexgrid.getCell(d)));
+   });
+
+   map.goblin.forEach(function (g) {
+      NOISY.npcs.push(new NPC(NOISY.hexgrid.getCell(g)));
+   });
 };
 
 NOISY.run = function () {
@@ -252,26 +322,18 @@ NOISY.run = function () {
       canvas;
 
    NOISY.images = new IMAGES();
-   NOISY.images.load("player", "images/ball.png");
-   NOISY.images.load("rock", "images/earth.png");
+   NOISY.images.load("player", "images/dwarf.png");
+   NOISY.images.load("goblin", "images/goblin1.png");
 
    canvas = document.getElementById("viewport");
    //canvas = document.createElement("canvas");
 
-   canvas.width = 400;
+   canvas.width = 600;
    canvas.height = 400;
-  // document.body.appendChild(canvas);
-
-   //   NOISY.images = new IMAGES();
-   //   NOISY.images.load('beach', 'beach4.png');
 
    NOISY.hexgrid = new HEX();
 
-   NOISY.hexgrid.init(MAPS.one);
-
-   NOISY.players[0] = new PLAYER();
-   // TODO: how to discover hexagon cell?
-   NOISY.players[0].setStartPos(NOISY.hexgrid.getCell("(0,0)"));
+   NOISY.loadMap(MAPS.one);
 
    // Track the mouse
    // Only call after setup globals

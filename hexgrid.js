@@ -57,7 +57,7 @@ function HEX() {
       hexPixelWidth,    // width of hex in pixels
       hexPixelHeight,   // height of hex in pixels
       hexSize,          // length of hexagon size
-      isShowIds = true; //
+      isShowIds = false;// display the cells ids
 
 
    // Hex represented in axial coords
@@ -112,6 +112,20 @@ function HEX() {
 
       this.getHash = function () {
          return this.axial.hash();
+      };
+
+      this.actor = null;
+
+      this.hasActor = function () {
+         return this.actor !== null;
+      };
+
+      this.setActor = function (actor) {
+         this.actor = actor;
+      };
+
+      this.clearActor = function () {
+         this.actor = null;
       };
 
       this.isWall = function () {
@@ -465,6 +479,13 @@ function HEX() {
       return results;
    }
 
+   function hasLineOfSight(a, b) {
+//      return true;
+      return line(a, b).every(function (c) {
+         return !c.isWall();
+      });
+   }
+
    // ---------------------------------------------
 
    // Cell start
@@ -485,6 +506,7 @@ function HEX() {
       drawHexPath: drawHexPath,
       getCell: getCell,
       line: line,
+      hasLineOfSight: hasLineOfSight,
       distance: distance,
       adjacent: adjacent,
 
