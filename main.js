@@ -24,13 +24,17 @@ NOISY.mode = MODE_SELECT;
 // always the cell under the mouse
 NOISY.mouseOverCell = null;
 
+// In SELECT mode this highlights when player is under mouse
+// In ACTION mode this highlights when npc is under mouse
+NOISY.selectableActor = null;
+
 // Only used in ACTION mode
 // Cells that are marked as reachable in this turn
 NOISY.reachableMapCells = null;
 
 // Only used in ACTION mode
 // Cells that are targetable in this turn
-NOISY.targetableMapCells = null;
+NOISY.targetableCells = null;
 
 // Only used in ACTION mode
 // Subset of reachableCells
@@ -102,10 +106,21 @@ NOISY.mousemove = function (canvas) {
             } else {
                NOISY.selectedPathCells = [];
             }
+
+            NOISY.selectableActor = NOISY.targetableCells.some(function (c) {
+               return c === cell;
+            }) ? cell : null;
+
+         } else {
+
+            NOISY.selectableActor = NOISY.players.some(function (p) {
+               return p.getCell() === cell;
+            }) ? cell : null;
          }
 
       } else {
          NOISY.mouseOverCell = null;
+         NOISY.selectableActor = null;
       }
    };
 };
@@ -131,7 +146,7 @@ NOISY.click = function (canvas) {
                   NOISY.reachableMapCells = new PATHFINDING(NOISY.hexgrid)
                      .findReachable(cell, p.getCurAP());
 
-                  NOISY.targetableMapCells = new PATHFINDING(NOISY.hexgrid)
+                  NOISY.targetableCells = new PATHFINDING(NOISY.hexgrid)
                      .findTargetable(cell, NOISY.npcs, NOISY.selectedPlayer.getWeaponRange());
 
                   break;
@@ -213,7 +228,7 @@ NOISY.update = function (interval) {
 // - overlaying canvasses
 //   <canvas id="bg" width="640" height="480" style="position: absolute; z-index: 0"></canvas>
 //   <canvas id="fg" width="640" height="480" style="position: absolute; z-index: 1"></canvas>
-NOISY.render = function (canvas /*, interval*/) {
+NOISY.render = function (canvas, dashboard /*, interval*/) {
    "use strict";
 
    var ctx;
@@ -239,7 +254,8 @@ NOISY.render = function (canvas /*, interval*/) {
    // mouse over cell
    if (NOISY.mouseOverCell !== null) {
       NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell, 36);
-      ctx.strokeStyle = '#00ff00';
+
+      ctx.strokeStyle = NOISY.selectableActor === NOISY.mouseOverCell ? '#ff0040' : '#00ff00';
       ctx.stroke();
    }
 
@@ -267,35 +283,45 @@ NOISY.render = function (canvas /*, interval*/) {
       // Targetable cells
 
       ctx.fillStyle = '#000000';
-      NOISY.targetableMapCells.forEach(function (c) {
+      NOISY.targetableCells.forEach(function (c) {
 
          ctx.strokeStyle = '#f00000';
          ctx.beginPath();
-         ctx.arc(c.centerxy.x, c.centerxy.y, 20, 0, 2 * Math.PI);
-         ctx.moveTo(c.centerxy.x - 25, c.centerxy.y);
-         ctx.lineTo(c.centerxy.x - 15, c.centerxy.y);
-         ctx.moveTo(c.centerxy.x + 25, c.centerxy.y);
-         ctx.lineTo(c.centerxy.x + 15, c.centerxy.y);
-         ctx.moveTo(c.centerxy.x, c.centerxy.y - 25);
-         ctx.lineTo(c.centerxy.x, c.centerxy.y - 15);
-         ctx.moveTo(c.centerxy.x, c.centerxy.y + 25);
-         ctx.lineTo(c.centerxy.x, c.centerxy.y + 15);
+         ctx.arc(c.centerxy.x, c.centerxy.y, 18, 0, 2 * Math.PI);
+         ctx.moveTo(c.centerxy.x - 23, c.centerxy.y);
+         ctx.lineTo(c.centerxy.x - 13, c.centerxy.y);
+         ctx.moveTo(c.centerxy.x + 23, c.centerxy.y);
+         ctx.lineTo(c.centerxy.x + 13, c.centerxy.y);
+         ctx.moveTo(c.centerxy.x, c.centerxy.y - 23);
+         ctx.lineTo(c.centerxy.x, c.centerxy.y - 13);
+         ctx.moveTo(c.centerxy.x, c.centerxy.y + 23);
+         ctx.lineTo(c.centerxy.x, c.centerxy.y + 13);
          ctx.stroke();
-
-         //ctx.fillRect(c.centerxy.x, c.centerxy.y, 20, 20);
       });
+
    }
-
-   // dashboard
-
-   ctx.strokeStyle = '#000000';
-   ctx.font = "24px sans serif";
-   ctx.lineWidth = 1;
-   ctx.strokeText(NOISY.mode, 10, 10);
 
    // reset current transformation matrix to the identity matrix
    // (clears the ctx.translate())
    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+   // --------------------------------------------------------------------
+   // dashboard
+
+   ctx = dashboard.getContext("2d");
+
+   ctx.clearRect(0, 0, dashboard.width, dashboard.height);
+   ctx.fillStyle = '#7fcabb';
+   ctx.fillRect(0, 0, dashboard.width, dashboard.height);
+
+   ctx.fillStyle = '#000000';
+   ctx.font = "18px Serif";
+   ctx.fillText("Mode:" + (NOISY.mode === MODE_ACTION ? "ACTION" : "SELECT"), 10, 16);
+
+   if (NOISY.mouseOverCell !== null && NOISY.mouseOverCell.hasActor()) {
+      ctx.fillText("AP:" + NOISY.mouseOverCell.getActor().getCurAP(), 150, 16);
+      ctx.fillText("Health:" + NOISY.mouseOverCell.getActor().getHealth(), 200, 16);
+   }
 };
 
 NOISY.loadMap = function (map) {
@@ -304,11 +330,11 @@ NOISY.loadMap = function (map) {
    NOISY.hexgrid.init(MAPS.one);
 
    map.dwarf.forEach(function (d) {
-      NOISY.players.push(new PLAYER(NOISY.hexgrid.getCell(d)));
+      NOISY.players.push(new PLAYER().init(NOISY.hexgrid.getCell(d)));
    });
 
    map.goblin.forEach(function (g) {
-      NOISY.npcs.push(new NPC(NOISY.hexgrid.getCell(g)));
+      NOISY.npcs.push(new NPC().init(NOISY.hexgrid.getCell(g)));
    });
 };
 
@@ -319,17 +345,20 @@ NOISY.run = function () {
       dt = 0,
       last = window.performance.now(),
       step = 1 / 60,
-      canvas;
+      canvas,
+      dashboard;
 
    NOISY.images = new IMAGES();
    NOISY.images.load("player", "images/dwarf.png");
    NOISY.images.load("goblin", "images/goblin1.png");
 
    canvas = document.getElementById("viewport");
-   //canvas = document.createElement("canvas");
-
    canvas.width = 600;
    canvas.height = 400;
+
+   dashboard = document.getElementById("dashboard");
+   dashboard.width = 600;
+   dashboard.height = 20;
 
    NOISY.hexgrid = new HEX();
 
@@ -384,7 +413,7 @@ NOISY.run = function () {
 
       // pass remainder into render for smoothing (interpolation)
       // (at this point dt < step)
-      NOISY.render(canvas, dt);
+      NOISY.render(canvas, dashboard, dt);
 
       last = now;
 

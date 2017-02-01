@@ -243,6 +243,7 @@ function PATHFINDING(hexgridf) {
    }
 
    // Return an array of cells that contain actors with the given range
+   // Return Cell[]
    function findTargetable(startCell, actors, range) {
 
       var cells = [],

@@ -124,6 +124,10 @@ function HEX() {
          this.actor = actor;
       };
 
+      this.getActor = function () {
+         return this.actor;
+      };
+
       this.clearActor = function () {
          this.actor = null;
       };

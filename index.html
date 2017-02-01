@@ -2,7 +2,7 @@
 
 <head>
    <style type="text/css">
-      canvas {
+      canvas.viewport {
          border: 1px solid black;
       }
       button {
@@ -20,7 +20,9 @@
    <div><button type="button" onclick="NOISY.endTurn()">End Turn</button></div>
    <br/>
    <div><canvas id="viewport"/></div>
+   <div><canvas id="dashboard"/></div>
    <script type="text/javascript" src="polyfills.js"></script>
+   <script type="text/javascript" src="actor.js"></script>
    <script type="text/javascript" src="player.js"></script>
    <script type="text/javascript" src="utils.js"></script>
    <script type="text/javascript" src="image.js"></script>

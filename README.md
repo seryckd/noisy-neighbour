@@ -55,9 +55,19 @@ technology
 webGL
 canvas
 
+## concepts
+
+dead bodies
+   - actors leave something behind when then die (skull, cross, ..)
+   - dead bodies can pile up in a single cell
+   - each body gives a movement penatly
+   - possibly shooting penalties too
+   - maybe bodies jump a cell before landing?
+
+skill tree
+   - instead of classes, actors have skill trees they can spend points in
 
 ## Noisy Neighbours
-
 
 Dwarves vs Goblins & friends.
 Hex grid.
