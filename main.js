@@ -52,6 +52,9 @@ NOISY.players = [];
 
 NOISY.npcs = [];
 
+// List of events to process
+NOISY.event = null;
+
 // Map keypresses to actions
 NOISY.keymap = {
    65 : 'left',         // 'a'
@@ -82,6 +85,35 @@ NOISY.coordsToCell = function (canvas, e) {
    return NOISY.hexgrid.selectHex(x, y);
 };
 
+// Calculate selectable cells based upon the current mouse over
+NOISY.calculateMouseMove = function () {
+   "use strict";
+
+   var cell = NOISY.mouseOverCell;
+
+   if (NOISY.mode === MODE_ACTION) {
+
+      if (!cell.hasActor() &&
+          !cell.isWall() &&
+          NOISY.reachableMapCells.has(cell.getHash())) {
+
+         NOISY.selectedPathCells = new PATHFINDING(NOISY.hexgrid)
+            .findPath(NOISY.selectedPlayer.getCell(), cell);
+
+      } else {
+         NOISY.selectedPathCells = [];
+      }
+
+      NOISY.selectableActor = NOISY.targetableCells.includes(cell) ? cell : null;
+
+   } else {
+
+      NOISY.selectableActor = NOISY.players.some(function (p) {
+         return p.getCell() === cell;
+      }) ? cell : null;
+   }
+};
+
 // Called on canvas event listener
 NOISY.mousemove = function (canvas) {
    "use strict";
@@ -91,32 +123,9 @@ NOISY.mousemove = function (canvas) {
 
       if (cell !== null) {
 
-         // always set mouseOverCell
          NOISY.mouseOverCell = cell;
 
-         if (NOISY.mode === MODE_ACTION) {
-
-            if (!cell.hasActor() &&
-                !cell.isWall() &&
-                NOISY.reachableMapCells.has(cell.getHash())) {
-
-               NOISY.selectedPathCells = new PATHFINDING(NOISY.hexgrid)
-                  .findPath(NOISY.selectedPlayer.getCell(), cell);
-
-            } else {
-               NOISY.selectedPathCells = [];
-            }
-
-            NOISY.selectableActor = NOISY.targetableCells.some(function (c) {
-               return c === cell;
-            }) ? cell : null;
-
-         } else {
-
-            NOISY.selectableActor = NOISY.players.some(function (p) {
-               return p.getCell() === cell;
-            }) ? cell : null;
-         }
+         NOISY.calculateMouseMove();
 
       } else {
          NOISY.mouseOverCell = null;
@@ -125,12 +134,25 @@ NOISY.mousemove = function (canvas) {
    };
 };
 
-// Called on canvas event listener
-NOISY.click = function (canvas) {
+NOISY.calculatePlayerAction = function () {
    "use strict";
 
-   return function (e) {
-      var cell = NOISY.coordsToCell(canvas, e),
+   var cell = NOISY.selectedPlayer.getCell();
+
+   NOISY.reachableMapCells = new PATHFINDING(NOISY.hexgrid)
+      .findReachable(cell, NOISY.selectedPlayer.getCurAP());
+
+   NOISY.targetableCells = new PATHFINDING(NOISY.hexgrid)
+      .findTargetable(cell, NOISY.npcs, NOISY.selectedPlayer.getWeaponRange());
+
+};
+
+// Called on canvas event listener
+NOISY.click = function (/* canvas */) {
+   "use strict";
+
+   return function (/* e */) {
+     var cell = NOISY.mouseOverCell,
          l,
          p;
 
@@ -143,11 +165,8 @@ NOISY.click = function (canvas) {
                if (p.getCell() === cell) {
                   NOISY.mode = MODE_ACTION;
                   NOISY.selectedPlayer = p;
-                  NOISY.reachableMapCells = new PATHFINDING(NOISY.hexgrid)
-                     .findReachable(cell, p.getCurAP());
 
-                  NOISY.targetableCells = new PATHFINDING(NOISY.hexgrid)
-                     .findTargetable(cell, NOISY.npcs, NOISY.selectedPlayer.getWeaponRange());
+                  NOISY.calculatePlayerAction();
 
                   break;
                }
@@ -156,22 +175,37 @@ NOISY.click = function (canvas) {
          } else {
             // action
 
-            if (cell !== NOISY.selectedPlayer.getCell()) {
+            if (NOISY.targetableCells.some(function(c) {
+               return c === cell;
+            })) {
+               NOISY.event = {
+                  "state": "init",
+                  "source": NOISY.selectedPlayer,
+                  "target": cell.getActor()
+               };
+            } else if (cell === NOISY.selectedPlayer) {
+               NOISY.cancelSelect();
+            } else {
                NOISY.mode = MODE_SELECT;
                NOISY.selectedPlayer.setMovePath(NOISY.selectedPathCells);
             }
          }
 
       } else {
-
-         NOISY.mode = MODE_SELECT;
-
-         NOISY.selectedPlayer = null;
-         NOISY.selectedPathCells = [];
-
-         NOISY.targetCell = null;
+         NOISY.cancelSelect();
       }
    };
+};
+
+NOISY.cancelSelect = function () {
+   "use strict";
+
+   NOISY.mode = MODE_SELECT;
+
+   NOISY.selectedPlayer = null;
+   NOISY.selectedPathCells = [];
+
+   NOISY.targetCell = null;
 };
 
 NOISY.endTurn = function () {
@@ -185,7 +219,8 @@ NOISY.endTurn = function () {
 NOISY.update = function (interval) {
    "use strict";
 
-   var velocity = 5;
+   var velocity = 5,
+      bulletSpeed = 0.2;
 
    // -------------------------------------------------------------------------
    // scroll the viewport
@@ -205,11 +240,69 @@ NOISY.update = function (interval) {
    }
 
    // -------------------------------------------------------------------------
-   // move player
+   // event
+
+   if (NOISY.event !== null) {
+
+      switch (NOISY.event.state) {
+         case "init" :
+            if (NOISY.hexgrid.areNeighbours(NOISY.event.source.getCell(), NOISY.event.target.getCell())) {
+               console.log("close combat");
+               NOISY.event = null;
+            } else {
+               NOISY.event.state = "travel";
+               NOISY.event.coordsxy = {
+                  "x": NOISY.event.source.centerxy.x,
+                  "y": NOISY.event.source.centerxy.y
+               };
+               NOISY.event.elapsedTime = 0;
+            }
+            break;
+
+         case "travel":
+
+            NOISY.event.elapsedTime += interval;
+
+            if (NOISY.event.elapsedTime < bulletSpeed) {
+
+               NOISY.event.coordsxy = {
+                  "x": UTILS.lerp(
+                     NOISY.event.source.centerxy.x,
+                     NOISY.event.target.centerxy.x,
+                     NOISY.event.elapsedTime / bulletSpeed),
+                  "y": UTILS.lerp(
+                     NOISY.event.source.centerxy.y,
+                     NOISY.event.target.centerxy.y,
+                     NOISY.event.elapsedTime / bulletSpeed)
+               };
+
+            } else {
+               NOISY.event.state = "damage";
+            }
+            break;
+
+         case "damage":
+            if (NOISY.event.target.applyDamage(NOISY.event.source.getWeaponDamage()) === false) {
+               NOISY.npcs = NOISY.npcs.filter(function (n) {
+                  return n !== NOISY.event.target;
+               });
+               NOISY.calculatePlayerAction();
+               NOISY.calculateMouseMove();
+               NOISY.selectableActor = null;
+            }
+            NOISY.event = null;
+            break;
+      }
+
+   }
+
+   // -------------------------------------------------------------------------
+   //  player
 
    NOISY.players.forEach(function (p) {
       p.update(interval);
    });
+
 
    // -------------------------------------------------------------------------
    // Misc
@@ -236,8 +329,11 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");
 
+   // Set with a clean slate
+   ctx.fillStyle = '#555555';
+   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
    // set viewport to current position
-   ctx.clearRect(0, 0, canvas.width, canvas.height);
    ctx.translate(NOISY.viewport.x, NOISY.viewport.y);
 
    NOISY.hexgrid.render(ctx);
@@ -299,6 +395,17 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
          ctx.stroke();
       });
 
+   }
+
+   // Event
+
+   if (NOISY.event !== null && NOISY.event.state === "travel") {
+      ctx.fillStyle = '#a03a40';
+      ctx.fillRect(
+         NOISY.event.coordsxy.x - 10,
+         NOISY.event.coordsxy.y - 10,
+         10,
+         10);
    }
 
    // reset current transformation matrix to the identity matrix

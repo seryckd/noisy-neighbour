@@ -513,6 +513,9 @@ function HEX() {
       hasLineOfSight: hasLineOfSight,
       distance: distance,
       adjacent: adjacent,
+      areNeighbours: function (c1, c2) {
+         return distance(c1, c2) === 1;
+      },
 
       getShowIds: getShowIds,
       setShowIds: setShowIds,

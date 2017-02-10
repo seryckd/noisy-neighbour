@@ -18,3 +18,22 @@ UTILS.realPosition = function position(el) {
    return pos;
 };
 
+// For use in array callbacks to match a given object
+// e.g. array.some(UTILS.matches(something))
+UTILS.matches = function (match) {
+   "use strict";
+   return function(node) {
+      if (node === match) {
+         return true;
+      }
+   };
+ };
+
+// linear interpolation of two numbers
+// number a
+// number b
+// number t where 0 <= t <= 1.0
+UTILS.lerp = function (a, b, t) {
+   "use strict";
+   return a + (b - a) * t;
+};

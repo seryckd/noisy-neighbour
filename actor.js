@@ -1,3 +1,4 @@
+/* globals UTILS */
 /* exported ACTOR */
 
 function ACTOR() {
@@ -9,6 +10,8 @@ function ACTOR() {
 
    // Expect to be set by supertypes
    this.imageName = "N/A";
+
+   this.isPlayer_ = false;
 
    this.path = [];
    this.health = 10;
@@ -36,6 +39,11 @@ ACTOR.prototype.init = function(startCell) {
    return this;
 };
 
+ACTOR.prototype.isPlayer = function() {
+   "use strict";
+   return this.isPlayer_;
+};
+
 ACTOR.prototype.getWeaponRange = function() {
    "use strict";
    return 5;
@@ -43,7 +51,21 @@ ACTOR.prototype.getWeaponRange = function() {
 
 ACTOR.prototype.getWeaponDamage = function() {
    "use strict";
-   return 2;
+   return 5;
+};
+
+ACTOR.prototype.applyDamage = function(damage) {
+   "use strict";
+   this.health -= damage;
+
+   if (this.health <= 0) {
+      // death
+
+      this.currentCell.clearActor();
+
+   }
+
+   return this.health > 0;
 };
 
 //
@@ -77,15 +99,6 @@ ACTOR.prototype.getCurAP = function() {
    return this.curAP;
 };
 
-// linear interpolation of two numbers
-// number a
-// number b
-// number t where 0 <= t <= 1.0
-ACTOR.prototype.lerp = function(a, b, t) {
-   "use strict";
-   return a + (b - a) * t;
-};
-
 ACTOR.prototype.update = function(interval) {
    "use strict";
 
@@ -113,12 +126,12 @@ ACTOR.prototype.update = function(interval) {
          }
       } else {
          // Move from current to next in path
-         this.centerxy.x = this.lerp(
+         this.centerxy.x = UTILS.lerp(
             this.currentCell.centerxy.x,
             this.path[0].centerxy.x,
             this.elapsedTime / speed);
 
-         this.centerxy.y = this.lerp(
+         this.centerxy.y = UTILS.lerp(
             this.currentCell.centerxy.y,
             this.path[0].centerxy.y,
             this.elapsedTime / speed);
