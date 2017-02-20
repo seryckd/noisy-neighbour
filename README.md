@@ -14,7 +14,8 @@
 * _selected overlays (done)_
 * _static opponents (done)_
 * _target overlays (done)_
-* melee, range combat
+* _range combat (done)_
+* melle
 * moving opponents heat seeking AI
 * field of view
 

@@ -13,18 +13,9 @@ function ACTOR() {
 
    this.isPlayer_ = false;
 
-   this.path = [];
    this.health = 10;
    this.curAP = 3;
    this.turnAP = 3;
-   this.elapsedTime = 0;
-
-   this.copyCenter = function(cell) {
-      return {
-         x : cell.centerxy.x,
-         y : cell.centerxy.y
-      };
-   };
 }
 
 // Params
@@ -32,7 +23,7 @@ function ACTOR() {
 ACTOR.prototype.init = function(startCell) {
    "use strict";
    this.currentCell = startCell;
-   this.centerxy = this.copyCenter(startCell);
+   this.centerxy = UTILS.copyCellCenter(startCell);
 
    this.currentCell.setActor(this);
 
@@ -68,15 +59,20 @@ ACTOR.prototype.applyDamage = function(damage) {
    return this.health > 0;
 };
 
-//
-// Params
-// Cell[] array of cells to move through
-ACTOR.prototype.setMovePath = function(apath) {
-   "use strict";
-   this.path = apath;
 
-   //currentCell = path[path.length - 1];
-   this.centerxy = this.copyCenter(this.currentCell);
+// Cell cell
+// {x,y} position (null)
+ACTOR.prototype.setPosition = function(cell, position) {
+   "use strict";
+   this.currentCell.clearActor();
+   this.currentCell = cell;
+   this.currentCell.setActor(this);
+
+   if (position) {
+      this.centerxy = position;
+   } else {
+      this.centerxy = UTILS.copyCellCenter(this.currentCell);
+   }
 };
 
 ACTOR.prototype.getCell = function() {
@@ -99,45 +95,13 @@ ACTOR.prototype.getCurAP = function() {
    return this.curAP;
 };
 
-ACTOR.prototype.update = function(interval) {
+ACTOR.prototype.decAP = function(amount) {
    "use strict";
+   this.curAP -= amount;
+};
 
-   var speed = 0.5;
-
-   if (this.path.length > 0) {
-
-      // time is from 0-0.5
-      this.elapsedTime += interval;
-
-      if (this.elapsedTime > speed) {
-         // Arrived at next cell, now target the next cell in the path
-
-         this.currentCell.clearActor();
-
-         this.currentCell = this.path.shift();
-         this.centerxy = this.copyCenter(this.currentCell);
-         this.currentCell.setActor(this);
-
-         this.elapsedTime = 0;
-         this.curAP -= 1;
-
-         if (this.curAP === 0) {
-            this.path = [];
-         }
-      } else {
-         // Move from current to next in path
-         this.centerxy.x = UTILS.lerp(
-            this.currentCell.centerxy.x,
-            this.path[0].centerxy.x,
-            this.elapsedTime / speed);
-
-         this.centerxy.y = UTILS.lerp(
-            this.currentCell.centerxy.y,
-            this.path[0].centerxy.y,
-            this.elapsedTime / speed);
-      }
-   }
-
+ACTOR.prototype.update = function(/*interval*/) {
+   "use strict";
 };
 
 ACTOR.prototype.render = function(ctx, image) {

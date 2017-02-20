@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,MoveActorAction*/
 
 /*
  * Control Scheme
@@ -26,7 +26,7 @@ NOISY.mouseOverCell = null;
 
 // In SELECT mode this highlights when player is under mouse
 // In ACTION mode this highlights when npc is under mouse
-NOISY.selectableActor = null;
+NOISY.selectableCell = null;
 
 // Only used in ACTION mode
 // Cells that are marked as reachable in this turn
@@ -51,6 +51,8 @@ NOISY.selectedPlayer = null;
 NOISY.players = [];
 
 NOISY.npcs = [];
+
+NOISY.action = null;
 
 // List of events to process
 NOISY.event = null;
@@ -85,53 +87,41 @@ NOISY.coordsToCell = function (canvas, e) {
    return NOISY.hexgrid.selectHex(x, y);
 };
 
-// Calculate selectable cells based upon the current mouse over
-NOISY.calculateMouseMove = function () {
+// Calculate state based upon the given cell
+//
+// Params
+// Cell: the cell under the mouse. May be null
+NOISY.calculateMouseMove = function (cell) {
    "use strict";
 
-   var cell = NOISY.mouseOverCell;
+   if (cell !== null) {
+      NOISY.mouseOverCell = cell.isWall() ? null : cell;
 
-   if (NOISY.mode === MODE_ACTION) {
+      if (NOISY.mode === MODE_ACTION) {
 
-      if (!cell.hasActor() &&
-          !cell.isWall() &&
-          NOISY.reachableMapCells.has(cell.getHash())) {
+         if (!cell.hasActor() &&
+             !cell.isWall() &&
+             NOISY.reachableMapCells.has(cell.getHash())) {
 
-         NOISY.selectedPathCells = new PATHFINDING(NOISY.hexgrid)
-            .findPath(NOISY.selectedPlayer.getCell(), cell);
+            NOISY.selectedPathCells = new PATHFINDING(NOISY.hexgrid)
+               .findPath(NOISY.selectedPlayer.getCell(), cell);
+
+         } else {
+            NOISY.selectedPathCells = [];
+         }
+
+         NOISY.selectableCell = NOISY.targetableCells.includes(cell) ? cell : null;
 
       } else {
-         NOISY.selectedPathCells = [];
+
+         NOISY.selectableCell = NOISY.players.some(function (p) {
+            return p.getCurAP() > 0 && p.getCell() === cell;
+         }) ? cell : null;
       }
-
-      NOISY.selectableActor = NOISY.targetableCells.includes(cell) ? cell : null;
-
    } else {
-
-      NOISY.selectableActor = NOISY.players.some(function (p) {
-         return p.getCell() === cell;
-      }) ? cell : null;
+      NOISY.mouseOverCell = null;
+      NOISY.selectableCell = null;
    }
-};
-
-// Called on canvas event listener
-NOISY.mousemove = function (canvas) {
-   "use strict";
-
-   return function (e) {
-      var cell = NOISY.coordsToCell(canvas, e);
-
-      if (cell !== null) {
-
-         NOISY.mouseOverCell = cell;
-
-         NOISY.calculateMouseMove();
-
-      } else {
-         NOISY.mouseOverCell = null;
-         NOISY.selectableActor = null;
-      }
-   };
 };
 
 NOISY.calculatePlayerAction = function () {
@@ -152,24 +142,16 @@ NOISY.click = function (/* canvas */) {
    "use strict";
 
    return function (/* e */) {
-     var cell = NOISY.mouseOverCell,
-         l,
-         p;
+      var cell = NOISY.mouseOverCell;
 
       if (cell !== null) {
 
          if (NOISY.mode === MODE_SELECT) {
 
-            for (l = 0; l < NOISY.players.length; ++l) {
-               p = NOISY.players[l];
-               if (p.getCell() === cell) {
-                  NOISY.mode = MODE_ACTION;
-                  NOISY.selectedPlayer = p;
-
-                  NOISY.calculatePlayerAction();
-
-                  break;
-               }
+            if (NOISY.selectableCell !== null) {
+               NOISY.selectedPlayer = NOISY.selectableCell.getActor();
+               NOISY.mode = MODE_ACTION;
+               NOISY.calculatePlayerAction();
             }
 
          } else {
@@ -187,7 +169,7 @@ NOISY.click = function (/* canvas */) {
                NOISY.cancelSelect();
             } else {
                NOISY.mode = MODE_SELECT;
-               NOISY.selectedPlayer.setMovePath(NOISY.selectedPathCells);
+               NOISY.action = new MoveActorAction(NOISY.selectedPlayer, NOISY.selectedPathCells);
             }
          }
 
@@ -216,11 +198,73 @@ NOISY.endTurn = function () {
    });
 };
 
+//
+NOISY.endPlayerAction = function () {
+   "use strict";
+   console.log('callback for ' + NOISY.selectedPlayer.getCell().getHash());
+   NOISY.calculateMouseMove(NOISY.selectedPlayer.getCell());
+   NOISY.calculatePlayerAction();
+   NOISY.selectableCell = null;
+};
+
+NOISY.updateEvent = function (interval, event) {
+   "use strict";
+   var bulletSpeed = 0.2;
+
+   switch (event.state) {
+      case "init" :
+         if (NOISY.hexgrid.areNeighbours(event.source.getCell(), event.target.getCell())) {
+            event.state = 'melee';
+         } else {
+            event.state = "travel";
+         }
+         event.coordsxy = {
+            "x": event.source.centerxy.x,
+            "y": event.source.centerxy.y
+         };
+         event.elapsedTime = 0;
+         break;
+
+      case "melee":
+      case "travel":
+
+         event.elapsedTime += interval;
+
+         if (event.elapsedTime < bulletSpeed) {
+
+            event.coordsxy = {
+               "x": UTILS.lerp(
+                  event.source.centerxy.x,
+                  event.target.centerxy.x,
+                  event.elapsedTime / bulletSpeed),
+               "y": UTILS.lerp(
+                  event.source.centerxy.y,
+                  event.target.centerxy.y,
+                  event.elapsedTime / bulletSpeed)
+            };
+
+         } else {
+            event.state = "damage";
+         }
+         break;
+
+      case "damage":
+         if (event.target.applyDamage(event.source.getWeaponDamage()) === false) {
+            NOISY.npcs = NOISY.npcs.filter(function (n) {
+               return n !== event.target;
+            });
+            NOISY.endPlayerAction();
+         }
+         event = null;
+         break;
+   }
+
+   return event;
+};
+
 NOISY.update = function (interval) {
    "use strict";
-
-   var velocity = 5,
-      bulletSpeed = 0.2;
+   var velocity = 5;
 
    // -------------------------------------------------------------------------
    // scroll the viewport
@@ -239,70 +283,23 @@ NOISY.update = function (interval) {
       NOISY.viewport.x -= velocity;
    }
 
+   if (NOISY.action !== null) {
+      NOISY.action = NOISY.action.update(interval);
+   }
+
    // -------------------------------------------------------------------------
    // event
 
    if (NOISY.event !== null) {
-
-      switch (NOISY.event.state) {
-         case "init" :
-            if (NOISY.hexgrid.areNeighbours(NOISY.event.source.getCell(), NOISY.event.target.getCell())) {
-               console.log("close combat");
-               NOISY.event = null;
-            } else {
-               NOISY.event.state = "travel";
-               NOISY.event.coordsxy = {
-                  "x": NOISY.event.source.centerxy.x,
-                  "y": NOISY.event.source.centerxy.y
-               };
-               NOISY.event.elapsedTime = 0;
-            }
-            break;
-
-         case "travel":
-
-            NOISY.event.elapsedTime += interval;
-
-            if (NOISY.event.elapsedTime < bulletSpeed) {
-
-               NOISY.event.coordsxy = {
-                  "x": UTILS.lerp(
-                     NOISY.event.source.centerxy.x,
-                     NOISY.event.target.centerxy.x,
-                     NOISY.event.elapsedTime / bulletSpeed),
-                  "y": UTILS.lerp(
-                     NOISY.event.source.centerxy.y,
-                     NOISY.event.target.centerxy.y,
-                     NOISY.event.elapsedTime / bulletSpeed)
-               };
-
-            } else {
-               NOISY.event.state = "damage";
-            }
-            break;
-
-         case "damage":
-            if (NOISY.event.target.applyDamage(NOISY.event.source.getWeaponDamage()) === false) {
-               NOISY.npcs = NOISY.npcs.filter(function (n) {
-                  return n !== NOISY.event.target;
-               });
-               NOISY.calculatePlayerAction();
-               NOISY.calculateMouseMove();
-               NOISY.selectableActor = null;
-            }
-            NOISY.event = null;
-            break;
-      }
-
+      NOISY.event = NOISY.updateEvent(interval, NOISY.event);
    }
 
    // -------------------------------------------------------------------------
    //  player
 
-   NOISY.players.forEach(function (p) {
-      p.update(interval);
-   });
-
+//   NOISY.players.forEach(function (p) {
+//      p.update(interval);
+//   });
 
    // -------------------------------------------------------------------------
    // Misc
@@ -311,20 +308,46 @@ NOISY.update = function (interval) {
    if (NOISY.keydown.space === true) {
       NOISY.endTurn();
    }
-
-
 };
 
-// Ideas to improve performance
-// - only update canvass for a bounding rect over the change
-// - cache canvas until an update occurs
-// - overlaying canvasses
-//   <canvas id="bg" width="640" height="480" style="position: absolute; z-index: 0"></canvas>
-//   <canvas id="fg" width="640" height="480" style="position: absolute; z-index: 1"></canvas>
+// ----------------------------------------------------------------------------
+// Render a target graphic depending on whether the mouse is over the cell
+//
+function renderTarget (ctx, targetableCells, mouseOverCell) {
+   "use strict";
+
+   var targettedCell;
+   ctx.save();
+
+   targetableCells.forEach(function (c) {
+
+      targettedCell = c === mouseOverCell;
+
+      ctx.lineWidth = targettedCell ? 3 : 2;
+      ctx.strokeStyle = targettedCell ? '#f00000' : '#b00000';
+
+      ctx.beginPath();
+      ctx.arc(c.centerxy.x, c.centerxy.y, 18, 0, 2 * Math.PI);
+      ctx.moveTo(c.centerxy.x - 23, c.centerxy.y);
+      ctx.lineTo(c.centerxy.x - 13, c.centerxy.y);
+      ctx.moveTo(c.centerxy.x + 23, c.centerxy.y);
+      ctx.lineTo(c.centerxy.x + 13, c.centerxy.y);
+      ctx.moveTo(c.centerxy.x, c.centerxy.y - 23);
+      ctx.lineTo(c.centerxy.x, c.centerxy.y - 13);
+      ctx.moveTo(c.centerxy.x, c.centerxy.y + 23);
+      ctx.lineTo(c.centerxy.x, c.centerxy.y + 13);
+      ctx.stroke();
+   });
+
+   ctx.restore();
+}
+
 NOISY.render = function (canvas, dashboard /*, interval*/) {
    "use strict";
 
-   var ctx;
+   var ctx,
+    mouseOverColour = '#00ff00',
+    selectableColour = '#ff0040';
 
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");
@@ -347,17 +370,28 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
       n.render(ctx, NOISY.images);
    });
 
-   // mouse over cell
-   if (NOISY.mouseOverCell !== null) {
-      NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell, 36);
+   if (NOISY.mode === MODE_SELECT) {
 
-      ctx.strokeStyle = NOISY.selectableActor === NOISY.mouseOverCell ? '#ff0040' : '#00ff00';
+      // mouse over cell
+      if (NOISY.mouseOverCell !== null) {
+         NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell, 36);
+
+         ctx.strokeStyle = NOISY.mouseOverCell === NOISY.selectableCell ? selectableColour : mouseOverColour;
+         ctx.stroke();
+      }
+
+   } else { //MODE_ACTION
+
+      // selected player stays selected in Action Mode
+      NOISY.hexgrid.drawHexPath(ctx, NOISY.selectedPlayer.getCell(), 36);
+      ctx.strokeStyle = selectableColour;
       ctx.stroke();
-   }
 
-   if (NOISY.mode === MODE_ACTION ) {
-
-      // ACTION mode
+      if (NOISY.mouseOverCell !== null && NOISY.mouseOverCell !== NOISY.selectedPlayer.getCell()) {
+         NOISY.hexgrid.drawHexPath(ctx, NOISY.mouseOverCell, 36);
+         ctx.strokeStyle = mouseOverColour;
+         ctx.stroke();
+      }
 
       // Reachable Cells
 
@@ -377,35 +411,32 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
       });
 
       // Targetable cells
-
-      ctx.fillStyle = '#000000';
-      NOISY.targetableCells.forEach(function (c) {
-
-         ctx.strokeStyle = '#f00000';
-         ctx.beginPath();
-         ctx.arc(c.centerxy.x, c.centerxy.y, 18, 0, 2 * Math.PI);
-         ctx.moveTo(c.centerxy.x - 23, c.centerxy.y);
-         ctx.lineTo(c.centerxy.x - 13, c.centerxy.y);
-         ctx.moveTo(c.centerxy.x + 23, c.centerxy.y);
-         ctx.lineTo(c.centerxy.x + 13, c.centerxy.y);
-         ctx.moveTo(c.centerxy.x, c.centerxy.y - 23);
-         ctx.lineTo(c.centerxy.x, c.centerxy.y - 13);
-         ctx.moveTo(c.centerxy.x, c.centerxy.y + 23);
-         ctx.lineTo(c.centerxy.x, c.centerxy.y + 13);
-         ctx.stroke();
-      });
-
+      renderTarget(ctx, NOISY.targetableCells, NOISY.mouseOverCell);
    }
 
    // Event
 
-   if (NOISY.event !== null && NOISY.event.state === "travel") {
-      ctx.fillStyle = '#a03a40';
-      ctx.fillRect(
-         NOISY.event.coordsxy.x - 10,
-         NOISY.event.coordsxy.y - 10,
-         10,
-         10);
+   if (NOISY.event !== null) {
+      if (NOISY.event.state === "travel") {
+         ctx.fillStyle = '#a03a40';
+         ctx.fillRect(
+            NOISY.event.coordsxy.x - 10,
+            NOISY.event.coordsxy.y - 10,
+            10,
+            10);
+      } else {
+         // melee
+         ctx.save();
+
+         ctx.translate(NOISY.event.coordsxy.x, NOISY.event.coordsxy.y);
+         ctx.rotate(Math.PI / 4);
+
+         ctx.fillStyle = '#a03a40';
+         ctx.fillRect(-7, -5, 14, 10);
+         ctx.fillRect(-2, 5, 5, 15);
+
+         ctx.restore();
+      }
    }
 
    // reset current transformation matrix to the identity matrix
@@ -473,7 +504,9 @@ NOISY.run = function () {
 
    // Track the mouse
    // Only call after setup globals
-   canvas.addEventListener("mousemove", NOISY.mousemove(canvas));
+   canvas.addEventListener("mousemove", function (e) {
+      NOISY.calculateMouseMove(NOISY.coordsToCell(canvas, e));
+   });
 
    // Track clicks
    canvas.addEventListener("click", NOISY.click(canvas));

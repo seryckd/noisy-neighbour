@@ -37,3 +37,12 @@ UTILS.lerp = function (a, b, t) {
    "use strict";
    return a + (b - a) * t;
 };
+
+// Copy the {x,y} parameters from the given cell
+UTILS.copyCellCenter = function(cell) {
+   "use strict";
+   return {
+      x : cell.centerxy.x,
+      y : cell.centerxy.y
+   };
+};
