@@ -487,8 +487,8 @@ NOISY.run = function () {
       dashboard;
 
    NOISY.images = new IMAGES();
-   NOISY.images.load("player", "images/dwarf.png");
-   NOISY.images.load("goblin", "images/goblin1.png");
+   NOISY.images.load("player", "../images/dwarf.png");
+   NOISY.images.load("goblin", "../images/goblin1.png");
 
    canvas = document.getElementById("viewport");
    canvas.width = 600;
