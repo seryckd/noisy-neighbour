@@ -1,4 +1,5 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,MoveActorAction*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,MoveActorAction,
+MissileAction,MeleeAction*/
 
 /*
  * Control Scheme
@@ -53,9 +54,6 @@ NOISY.players = [];
 NOISY.npcs = [];
 
 NOISY.action = null;
-
-// List of events to process
-NOISY.event = null;
 
 // Map keypresses to actions
 NOISY.keymap = {
@@ -160,11 +158,25 @@ NOISY.click = function (/* canvas */) {
             if (NOISY.targetableCells.some(function(c) {
                return c === cell;
             })) {
-               NOISY.event = {
-                  "state": "init",
-                  "source": NOISY.selectedPlayer,
-                  "target": cell.getActor()
-               };
+
+              if (NOISY.hexgrid.areNeighbours(cell, NOISY.selectedPlayer.getCell())) {
+                NOISY.action = new MeleeAction(
+                  NOISY.selectedPlayer,
+                  cell.getActor(),
+                  function() {
+                    NOISY.applyDamage(cell.getActor(), NOISY.selectedPlayer.getWeaponDamage());
+                  }
+                );
+              } else {
+                NOISY.action = new MissileAction(
+                  NOISY.selectedPlayer,
+                  cell.getActor(),
+                  function() {
+                    NOISY.applyDamage(cell.getActor(), NOISY.selectedPlayer.getWeaponDamage());
+                  }
+                );
+              }
+
             } else if (cell === NOISY.selectedPlayer) {
                NOISY.cancelSelect();
             } else {
@@ -207,59 +219,15 @@ NOISY.endPlayerAction = function () {
    NOISY.selectableCell = null;
 };
 
-NOISY.updateEvent = function (interval, event) {
-   "use strict";
-   var bulletSpeed = 0.2;
+NOISY.applyDamage = function (target, damage) {
+  "use strict";
 
-   switch (event.state) {
-      case "init" :
-         if (NOISY.hexgrid.areNeighbours(event.source.getCell(), event.target.getCell())) {
-            event.state = 'melee';
-         } else {
-            event.state = "travel";
-         }
-         event.coordsxy = {
-            "x": event.source.centerxy.x,
-            "y": event.source.centerxy.y
-         };
-         event.elapsedTime = 0;
-         break;
-
-      case "melee":
-      case "travel":
-
-         event.elapsedTime += interval;
-
-         if (event.elapsedTime < bulletSpeed) {
-
-            event.coordsxy = {
-               "x": UTILS.lerp(
-                  event.source.centerxy.x,
-                  event.target.centerxy.x,
-                  event.elapsedTime / bulletSpeed),
-               "y": UTILS.lerp(
-                  event.source.centerxy.y,
-                  event.target.centerxy.y,
-                  event.elapsedTime / bulletSpeed)
-            };
-
-         } else {
-            event.state = "damage";
-         }
-         break;
-
-      case "damage":
-         if (event.target.applyDamage(event.source.getWeaponDamage()) === false) {
-            NOISY.npcs = NOISY.npcs.filter(function (n) {
-               return n !== event.target;
-            });
-            NOISY.endPlayerAction();
-         }
-         event = null;
-         break;
-   }
-
-   return event;
+  if (target.applyDamage(damage) === false) {
+     NOISY.npcs = NOISY.npcs.filter(function (n) {
+        return n !== target;
+     });
+     NOISY.endPlayerAction();
+  }
 };
 
 NOISY.update = function (interval) {
@@ -285,13 +253,6 @@ NOISY.update = function (interval) {
 
    if (NOISY.action !== null) {
       NOISY.action = NOISY.action.update(interval);
-   }
-
-   // -------------------------------------------------------------------------
-   // event
-
-   if (NOISY.event !== null) {
-      NOISY.event = NOISY.updateEvent(interval, NOISY.event);
    }
 
    // -------------------------------------------------------------------------
@@ -414,29 +375,8 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
       renderTarget(ctx, NOISY.targetableCells, NOISY.mouseOverCell);
    }
 
-   // Event
-
-   if (NOISY.event !== null) {
-      if (NOISY.event.state === "travel") {
-         ctx.fillStyle = '#a03a40';
-         ctx.fillRect(
-            NOISY.event.coordsxy.x - 10,
-            NOISY.event.coordsxy.y - 10,
-            10,
-            10);
-      } else {
-         // melee
-         ctx.save();
-
-         ctx.translate(NOISY.event.coordsxy.x, NOISY.event.coordsxy.y);
-         ctx.rotate(Math.PI / 4);
-
-         ctx.fillStyle = '#a03a40';
-         ctx.fillRect(-7, -5, 14, 10);
-         ctx.fillRect(-2, 5, 5, 15);
-
-         ctx.restore();
-      }
+   if (NOISY.action !== null) {
+      NOISY.action.render(ctx);
    }
 
    // reset current transformation matrix to the identity matrix
