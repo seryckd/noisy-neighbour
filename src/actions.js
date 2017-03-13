@@ -10,11 +10,12 @@
 //
 // ACTOR actor
 // Cell[] path - cells to move the actor through
-function MoveActorAction(actor, path) {
+function MoveActorAction(actor, path, callback) {
    "use strict";
 
    this.actor = actor;
    this.path = path;
+   this.callback = callback;
 
    this.elapsedTime = 0;
 
@@ -46,7 +47,9 @@ MoveActorAction.prototype.update = function(interval) {
       this.actor.decAP(1);
 
       if (this.path.length === 0 || this.actor.getCurAP() === 0) {
+         // Done
          this.path = [];
+         this.callback();
          return null;
       }
 

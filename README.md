@@ -6,21 +6,7 @@ Everything is better with Programmer Art (TM).
 
 ## TODO
 
-* _hex grid (done)_
-* _input selects grid (done)_
-* _cross hairs mark hex cursor is over (done)_
-* _scroll it with keys (done)_
-* _character moves around grid (done)_
-* _player moves towards clicked hex 1 hex at a time (done)_
-* _add walls scenery (done)_
-* _track movement points (done)_
-* _button for end turn (done)_
-* _selected overlays (done)_
-* _static opponents (done)_
-* _target overlays (done)_
-* _range combat (done)_
-* bug fix melee combat, keep focus on player until no more action points
-* grid should be under players
+* when in acton mode, if click on another player then switch to that one
 * moving opponents heat seeking AI
 * field of view
 
@@ -30,6 +16,25 @@ let is not available in Safari9
 should be using a transpiler but haven't set up a toolchain yet
 
 ## control scheme
+
+Mode - ACTION, SELECT
+
+mouse move over (SELECT)
+  non wall cell - highlight green
+  player with >0 action points  - highlight red as selectable
+  actor - show stats in dashboard
+
+mouse move over (ACTION)
+  non wall cell - highlight green
+  reachable cell - show path from source to cell
+
+mouse click (SELECT)
+  selectable player - enter ACTION mode, display cells that can be reached and enemies that can be targetted
+
+mouse click (ACTION)
+  reachable cells - move to cell
+  targetable actors - combat
+  anything else - cancel action
 
 click to select unit
   cells that can be moved to with current action points are highlighted with 'can move to' overlay

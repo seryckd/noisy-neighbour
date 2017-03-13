@@ -45,6 +45,11 @@ ACTOR.prototype.getWeaponDamage = function() {
    return 5;
 };
 
+ACTOR.prototype.getCloseCombatDamage = function() {
+   "use strict";
+   return 5;
+};
+
 ACTOR.prototype.applyDamage = function(damage) {
    "use strict";
    this.health -= damage;
@@ -116,9 +121,9 @@ ACTOR.prototype.render = function(ctx, image) {
    // rectangle
    // points in rectangle
 
-   ctx.strokeText(this.curAP,
-                 this.centerxy.x,
-                 this.centerxy.y);
+//   ctx.strokeText(this.curAP,
+//                 this.centerxy.x,
+//                 this.centerxy.y);
 
 };
 
