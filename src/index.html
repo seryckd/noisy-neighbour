@@ -2,6 +2,13 @@
 
 <head>
    <style type="text/css">
+      .header-parent {
+         display: flex;
+         width: 200px;
+      }
+      .header-child {
+         margin: auto;
+      }
       canvas.viewport {
          border: 1px solid black;
       }
@@ -17,7 +24,10 @@
 
 <body>
    <h1>Noisy Neighbours</h1>
-   <div><button type="button" onclick="NOISY.endTurn()">End Turn</button></div>
+   <div class="header-parent">
+      <button class="header-child" type="button" onclick="NOISY.endTurn()">End Turn</button>
+      <div class="header-child"><p id="turn">hello</p></div>
+   </div>
    <br/>
    <div><canvas id="viewport"/></div>
    <div><canvas id="dashboard"/></div>
@@ -31,5 +41,6 @@
    <script type="text/javascript" src="hexgrid.js"></script>
    <script type="text/javascript" src="pathfinding.js"></script>
    <script type="text/javascript" src="npc.js"></script>
+   <script type="text/javascript" src="computer.js"></script>
    <script type="text/javascript" src="main.js"></script>
 </body>

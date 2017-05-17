@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,MoveActorAction,MissileAction,MeleeAction*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,COMPUTER,MoveActorAction,MissileAction,MeleeAction*/
 
 /*
  * Control Scheme
@@ -16,6 +16,11 @@
  */
 
 var NOISY = NOISY || {};
+
+var TURN_PLAYER = 'PLAYER';
+var TURN_COMPUTER = 'COMPUTER';
+NOISY.turn = TURN_PLAYER;
+NOISY.turnElement = {};
 
 var MODE_ACTION = 'a';
 var MODE_SELECT = 's';
@@ -72,7 +77,7 @@ NOISY.isShowIds = true;
 // Return: boolean true for user input is allowed
 NOISY.userInputAllowed = function() {
    "use strict";
-   return NOISY.action === null;
+   return NOISY.action === null && NOISY.turn === TURN_PLAYER;
 };
 
 // Convert event coords to a cell
@@ -143,7 +148,7 @@ NOISY.calculateActorView = function (actor) {
       .findReachable(cell, actor.getCurAP());
 
    view.targetableCells = new PATHFINDING(NOISY.hexgrid)
-      .findTargetable(cell, NOISY.npcs, actor.getWeaponRange());
+      .findTargetable(cell, NOISY.npcs, actor.getMissileRange());
 
    view.pathCells = [];
 
@@ -179,15 +184,13 @@ NOISY.handleClickInput = function (cell) {
          return c === cell;
       })) {
 
-         // TOOD will need to be changed to allow for weapons that use more than one AP
-         NOISY.selPlayer.decAP(1);
-
          if (NOISY.hexgrid.areNeighbours(cell, NOISY.selPlayer.getCell())) {
             NOISY.action = new MeleeAction(
                NOISY.selPlayer,
                cell.getActor(),
                function() {
-                  NOISY.applyDamage(cell.getActor(), NOISY.selPlayer.getCloseCombatDamage());
+                  NOISY.endPlayerAction();
+                  return null;
                }
             );
          } else {
@@ -195,7 +198,8 @@ NOISY.handleClickInput = function (cell) {
                NOISY.selPlayer,
                cell.getActor(),
                function() {
-                  NOISY.applyDamage(cell.getActor(), NOISY.selPlayer.getWeaponDamage());
+                  NOISY.endPlayerAction();
+                  return null;
                }
             );
          }
@@ -218,6 +222,8 @@ NOISY.endActionMode = function () {
 
    NOISY.mode = MODE_SELECT;
 
+   NOISY.userSelectedCell = null;
+
    NOISY.selPlayer = null;
    NOISY.selPlayerView = {};
 
@@ -226,20 +232,24 @@ NOISY.endActionMode = function () {
 
 NOISY.endTurn = function () {
    "use strict";
-   NOISY.players.forEach(function (p) {
-      p.newTurn();
-   });
-};
 
-NOISY.applyDamage = function(target, damage) {
-   "use strict";
-   if (target.applyDamage(damage) === false) {
-      // dead target, need to improve this
-      NOISY.npcs = NOISY.npcs.filter(function (n) {
-         return n !== target;
+   NOISY.turn = NOISY.turn === TURN_PLAYER ? TURN_COMPUTER : TURN_PLAYER;
+
+   if (NOISY.turn === TURN_PLAYER) {
+      NOISY.players.forEach(function (p) {
+         p.newTurn();
       });
+      NOISY.action = null;
+   } else {
+      // Start of computer turn, clean up any unfinished player actions
+      NOISY.endActionMode();
+      NOISY.npcs.forEach(function (p) {
+         p.newTurn();
+      });
+
+      NOISY.action = new COMPUTER(NOISY.npcs/*, NOISY.players*/).doTurn();
    }
-   NOISY.endPlayerAction();
+
 };
 
 // Called after every action initiated by the user on the player
@@ -261,6 +271,24 @@ NOISY.endPlayerAction = function () {
       }
 
       NOISY.selectableActorCell = null;
+   }
+
+   return null;
+};
+
+NOISY.deadActor = function(actor) {
+   "use strict";
+
+   actor.getCell().clearActor();
+
+   if (actor.isPlayer()) {
+      NOISY.players = NOISY.players.filter(function (n) {
+         return n !== actor;
+      });
+   } else {
+      NOISY.npcs = NOISY.npcs.filter(function (n) {
+         return n !== actor;
+      });
    }
 };
 
@@ -346,6 +374,8 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
    var ctx,
     mouseOverColour = '#00ff00',
     selectableColour = '#ff0040';
+
+   NOISY.turnElement.innerHTML = NOISY.turn;
 
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");
@@ -475,6 +505,8 @@ NOISY.run = function () {
    canvas = document.getElementById("viewport");
    canvas.width = 600;
    canvas.height = 400;
+
+   NOISY.turnElement = document.getElementById("turn");
 
    dashboard = document.getElementById("dashboard");
    dashboard.width = 600;

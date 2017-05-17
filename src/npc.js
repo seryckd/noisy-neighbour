@@ -1,4 +1,4 @@
-/*globals ACTOR*/
+/*globals ACTOR */
 /* exported NPC */
 
 function NPC() {

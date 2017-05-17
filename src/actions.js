@@ -1,5 +1,15 @@
-/* globals UTILS */
-/* exported MoveActorAction */
+/* globals UTILS, NOISY */
+/* exported MoveActorAction, MissileAction, MeleeAction */
+
+
+// Might rename Actions to Animations.
+// Every Action has update() and render().
+//
+// update() returns an Action or null. Null means that control returns to the
+// main input loop (e.g.the player). Anything else is the action that is
+// currently happening.
+// e.g. actions can be chained by returning another action.
+
 
 // ----------------------------------------------------------------------------
 // Move Actor Action
@@ -27,7 +37,7 @@ function MoveActorAction(actor, path, callback) {
 // Update the Actor's position as it moves through the path
 //
 // long interval
-// return this || null
+// return this action, another action or null
 MoveActorAction.prototype.update = function(interval) {
    "use strict";
    var speed = 0.5;
@@ -49,8 +59,8 @@ MoveActorAction.prototype.update = function(interval) {
       if (this.path.length === 0 || this.actor.getCurAP() === 0) {
          // Done
          this.path = [];
-         this.callback();
-         return null;
+         return this.callback();
+         //return null;
       }
 
    } else {
@@ -82,43 +92,53 @@ MoveActorAction.prototype.render = function () {
 // ----------------------------------------------------------------------------
 
 // Actor source
-// Cell target
+// Actor target
 // function callback
 function MissileAction(source, target, callback) {
-  "use strict";
+   "use strict";
 
-  this.source = source;
-  this.target = target;
-  this.callback = callback;
-  this.coordsxy = {};
+   this.source = source;
+   this.target = target;
+   this.callback = callback;
+   this.coordsxy = {};
+   this.elapsedTime = 0;
 
-  this.elapsedTime = 0;
+   // cost of missile action
+   this.source.decAP(1);
 }
 
 
 MissileAction.prototype.update = function (interval) {
   "use strict";
-  var animationTime = 0.2;
+  var animationTime = 0.2,
+      self = this;
 
-  this.elapsedTime += interval;
+  self.elapsedTime += interval;
 
-  if (this.elapsedTime < animationTime) {
+  if (self.elapsedTime < animationTime) {
 
-     this.coordsxy = {
+     self.coordsxy = {
         "x": UTILS.lerp(
-           this.source.centerxy.x,
-           this.target.centerxy.x,
-           this.elapsedTime / animationTime),
+           self.source.centerxy.x,
+           self.target.centerxy.x,
+           self.elapsedTime / animationTime),
         "y": UTILS.lerp(
-           this.source.centerxy.y,
-           this.target.centerxy.y,
-           this.elapsedTime / animationTime)
+           self.source.centerxy.y,
+           self.target.centerxy.y,
+           self.elapsedTime / animationTime)
      };
   } else {
 
-    // Done
-    this.callback();
-    return null;
+     if (self.target.applyDamage(this.source.getMissileDamage()) === false) {
+        // target death
+
+        console.log('DEATH by MISSILE');
+
+        NOISY.deadActor(self.target);
+
+        // TODO DeathAction, pass callback to it
+     }
+     return self.callback();
   }
 
   return this;
@@ -141,43 +161,55 @@ MissileAction.prototype.render = function (ctx) {
 // ----------------------------------------------------------------------------
 
 // Actor source
-// Cell target
+// Actor target
 // function callback
 function MeleeAction(source, target, callback) {
-  "use strict";
+   "use strict";
 
-  this.source = source;
-  this.target = target;
-  this.callback = callback;
-  this.coordsxy = {};
+   this.source = source;
+   this.target = target;
+   this.callback = callback;
+   this.coordsxy = {};
 
-  this.elapsedTime = 0;
+   this.elapsedTime = 0;
+
+   // cost of melee action
+   this.source.decAP(1);
 }
 
 
 MeleeAction.prototype.update = function (interval) {
   "use strict";
-  var animationTime = 0.2;
+  var animationTime = 0.2,
+      self = this;
 
-  this.elapsedTime += interval;
+  self.elapsedTime += interval;
 
-  if (this.elapsedTime < animationTime) {
+  if (self.elapsedTime < animationTime) {
 
      this.coordsxy = {
         "x": UTILS.lerp(
-           this.source.centerxy.x,
-           this.target.centerxy.x,
-           this.elapsedTime / animationTime),
+           self.source.centerxy.x,
+           self.target.centerxy.x,
+           self.elapsedTime / animationTime),
         "y": UTILS.lerp(
-           this.source.centerxy.y,
-           this.target.centerxy.y,
-           this.elapsedTime / animationTime)
+           self.source.centerxy.y,
+           self.target.centerxy.y,
+           self.elapsedTime / animationTime)
      };
   } else {
 
-    // Done
-    this.callback();
-    return null;
+     if (self.target.applyDamage(self.source.getMeleeDamage()) === false) {
+
+        console.log('DEATH by MELEE');
+
+        // target death
+
+        NOISY.deadActor(self.target);
+
+        // TODO DeathAction, pass callback to it
+     }
+     return self.callback();
   }
 
   return this;
@@ -196,4 +228,35 @@ MeleeAction.prototype.render = function (ctx) {
   ctx.fillRect(-2, 5, 5, 15);
 
   ctx.restore();
+};
+
+
+// ----------------------------------------------------------------------------
+// Wait Action
+// ----------------------------------------------------------------------------
+
+function WaitAction(time, callback) {
+   "use strict";
+
+   this.time = time;
+   this.callback = callback;
+
+   this.elapsedTime = 0;
+}
+
+// long interval
+// return this action, another action or null
+WaitAction.prototype.update = function(interval) {
+   "use strict";
+
+   this.elapsedTime += interval;
+
+   if (this.elapsedTime > this.time) {
+      return this.callback();
+   }
+   return this;
+};
+
+WaitAction.prototype.render = function () {
+  "use strict";
 };

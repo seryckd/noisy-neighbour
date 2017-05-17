@@ -1,5 +1,5 @@
 /* globals UTILS */
-/* exported ACTOR */
+/* exported ACTOR, DAMAGE */
 
 function ACTOR() {
    "use strict";
@@ -35,31 +35,28 @@ ACTOR.prototype.isPlayer = function() {
    return this.isPlayer_;
 };
 
-ACTOR.prototype.getWeaponRange = function() {
+ACTOR.prototype.getMissileRange = function() {
    "use strict";
    return 5;
 };
 
-ACTOR.prototype.getWeaponDamage = function() {
+// Return: Damage
+ACTOR.prototype.getMissileDamage = function() {
    "use strict";
-   return 5;
+   return new DAMAGE('missile', 5);
 };
 
-ACTOR.prototype.getCloseCombatDamage = function() {
+// return: Damage
+ACTOR.prototype.getMeleeDamage = function() {
    "use strict";
-   return 5;
+   return new DAMAGE('melee', 5);
 };
 
+// Damage damage
+// Return: Boolean - true is alive, false is dead
 ACTOR.prototype.applyDamage = function(damage) {
    "use strict";
-   this.health -= damage;
-
-   if (this.health <= 0) {
-      // death
-
-      this.currentCell.clearActor();
-
-   }
+   this.health -= damage.getDamage();
 
    return this.health > 0;
 };
@@ -80,6 +77,7 @@ ACTOR.prototype.setPosition = function(cell, position) {
    }
 };
 
+// Return Cell
 ACTOR.prototype.getCell = function() {
    "use strict";
    return this.currentCell;
@@ -105,6 +103,11 @@ ACTOR.prototype.decAP = function(amount) {
    this.curAP -= amount;
 };
 
+ACTOR.prototype.clearAP = function() {
+   "use strict";
+   this.curAP = 0;
+};
+
 ACTOR.prototype.update = function(/*interval*/) {
    "use strict";
 };
@@ -127,4 +130,14 @@ ACTOR.prototype.render = function(ctx, image) {
 
 };
 
+function DAMAGE(type, damage) {
+   "use strict";
 
+   this.damage = damage;
+   this.type = type;
+}
+
+DAMAGE.prototype.getDamage = function() {
+   "use strict";
+   return this.damage;
+};
