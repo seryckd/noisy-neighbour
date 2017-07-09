@@ -1,5 +1,5 @@
 /* globals UTILS, NOISY */
-/* exported MoveActorAction, MissileAction, MeleeAction */
+/* exported ACTION, MoveActorAction, MissileAction, MeleeAction */
 
 
 // Might rename Actions to Animations.
@@ -9,6 +9,17 @@
 // main input loop (e.g.the player). Anything else is the action that is
 // currently happening.
 // e.g. actions can be chained by returning another action.
+
+function ACTION() {}
+
+ACTION.prototype.update = function(/*interval*/) {
+   "use strict";
+   return null;
+};
+
+ACTION.prototype.render = function(/*ctx*/) {
+      "use strict";
+};
 
 
 // ----------------------------------------------------------------------------
@@ -20,6 +31,7 @@
 //
 // ACTOR actor
 // Cell[] path - cells to move the actor through
+// ACTION callback -
 function MoveActorAction(actor, path, callback) {
    "use strict";
 
@@ -32,6 +44,8 @@ function MoveActorAction(actor, path, callback) {
    this.cell = actor.getCell();
    this.centerxy = UTILS.copyCellCenter(this.cell);
 }
+
+MoveActorAction.prototype = new ACTION();
 
 // update
 // Update the Actor's position as it moves through the path
@@ -80,10 +94,6 @@ MoveActorAction.prototype.update = function(interval) {
    }
 
    return this;
-};
-
-MoveActorAction.prototype.render = function () {
-  "use strict";
 };
 
 
@@ -244,6 +254,8 @@ function WaitAction(time, callback) {
    this.elapsedTime = 0;
 }
 
+WaitAction.prototype = new ACTION();
+
 // long interval
 // return this action, another action or null
 WaitAction.prototype.update = function(interval) {
@@ -255,8 +267,4 @@ WaitAction.prototype.update = function(interval) {
       return this.callback();
    }
    return this;
-};
-
-WaitAction.prototype.render = function () {
-  "use strict";
 };

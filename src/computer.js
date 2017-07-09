@@ -1,4 +1,4 @@
-/* globals NOISY, PATHFINDING, MoveActorAction, MeleeAction, WaitAction */
+/* globals NOISY, PATHFINDING, ACTION, MoveActorAction, MeleeAction, WaitAction */
 /* exported COMPUTER */
 
 // Created to handle a turn.
@@ -26,9 +26,11 @@ COMPUTER.prototype.doTurn = function() {
       action = this.actorTurn(this.actors[0]);
    }
 
-   // Call EndTurn()
-   return action;
+   if (action === null) {
+      NOISY.endTurn();
+   }
 
+   return action;
 };
 
 // generate an action
