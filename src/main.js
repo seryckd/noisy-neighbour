@@ -185,28 +185,17 @@ NOISY.handleClickInput = function (cell) {
       })) {
 
          if (NOISY.hexgrid.areNeighbours(cell, NOISY.selPlayer.getCell())) {
-            NOISY.action = new MeleeAction(
-               NOISY.selPlayer,
-               cell.getActor(),
-               function() {
-                  NOISY.endPlayerAction();
-                  return null;
-               }
-            );
+            NOISY.action = new MeleeAction(NOISY.selPlayer, cell.getActor())
+               .setCallback(NOISY.endPlayerAction);
          } else {
-            NOISY.action = new MissileAction(
-               NOISY.selPlayer,
-               cell.getActor(),
-               function() {
-                  NOISY.endPlayerAction();
-                  return null;
-               }
-            );
+            NOISY.action = new MissileAction(NOISY.selPlayer, cell.getActor())
+               .setCallback(NOISY.endPlayerAction);
          }
       } else if (NOISY.selPlayerView.reachableCells.has(cell.getHash())) {
 
          NOISY.action = new MoveActorAction(
-            NOISY.selPlayer, NOISY.selPlayerView.pathCells, NOISY.endPlayerAction);
+            NOISY.selPlayer, NOISY.selPlayerView.pathCells)
+               .setCallback(NOISY.endPlayerAction);
 
          NOISY.selPlayerView = null;
       } else {
@@ -247,7 +236,7 @@ NOISY.endTurn = function () {
          p.newTurn();
       });
 
-      NOISY.action = new COMPUTER(NOISY.npcs/*, NOISY.players*/).doTurn();
+      NOISY.action = new ComputerAction(NOISY.npcs);
    }
 
 };
@@ -272,8 +261,6 @@ NOISY.endPlayerAction = function () {
 
       NOISY.selectableActorCell = null;
    }
-
-   return null;
 };
 
 NOISY.deadActor = function(actor) {

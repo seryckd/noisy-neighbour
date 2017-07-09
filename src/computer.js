@@ -2,16 +2,19 @@
 /* exported COMPUTER */
 
 // Created to handle a turn.
-function COMPUTER(actors) {
+function ComputerAction(actors) {
    "use strict";
 
    this.actors = actors.slice(0);
 }
 
+ComputerAction.prototype = new ACTION();
+
+
 // Selects the actor to do the next action
 // Actor[]
 // Return Action
-COMPUTER.prototype.doTurn = function() {
+ComputerAction.prototype.update = function() {
    "use strict";
    var action = null;
 
@@ -36,7 +39,7 @@ COMPUTER.prototype.doTurn = function() {
 // generate an action
 // callback
 // Return Action
-COMPUTER.prototype.actorTurn = function(actor) {
+ComputerAction.prototype.actorTurn = function(actor) {
    "use strict";
 
    var self = this,
@@ -60,11 +63,8 @@ COMPUTER.prototype.actorTurn = function(actor) {
       if (NOISY.hexgrid.distance(actor.getCell(), target.actor.getCell()) === 1) {
          console.log('close combat');
 
-         return new MeleeAction(
-            actor,
-            target.actor,
-            function() { return new WaitAction(0.2, self.doTurn.bind(self)); }
-         );
+         return new MeleeAction(actor, target.actor)
+            .setNextAction(new WaitAction(0.2).setNextAction(self));
       } else {
          console.log('move');
 
@@ -73,13 +73,9 @@ COMPUTER.prototype.actorTurn = function(actor) {
          // the last element is the target, remove that so we stop at it
          path.pop();
 
-         return new MoveActorAction(
-            actor,
-            path,
-            function() { return new WaitAction(0.2, self.doTurn.bind(self)); }
-         );
+         return new MoveActorAction(actor, path)
+            .setNextAction(new WaitAction(0.2).setNextAction(self));
       }
-
 
    } else {
       console.log('no targets');

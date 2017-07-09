@@ -12,9 +12,32 @@
 
 function ACTION() {}
 
+ACTION.prototype.setCallback = function(callback) {
+   "use strict";
+   this.callback = callback;
+   return this;
+}
+
+ACTION.prototype.setNextAction = function(action) {
+   "use strict";
+   this.nextAction = action;
+   return this;
+}
+
+ACTION.prototype.endUpdate = function() {
+   "use strict";
+   if (this.callback !== undefined) {
+      this.callback();
+      return null;
+   } else if (this.nextAction !== undefined) {
+      return this.nextAction;
+   }
+   throw new Error("ACTION does not have callback or nextAction defined");
+}
+
 ACTION.prototype.update = function(/*interval*/) {
    "use strict";
-   return null;
+   return this.endUpdate();
 };
 
 ACTION.prototype.render = function(/*ctx*/) {
@@ -31,13 +54,11 @@ ACTION.prototype.render = function(/*ctx*/) {
 //
 // ACTOR actor
 // Cell[] path - cells to move the actor through
-// ACTION callback -
-function MoveActorAction(actor, path, callback) {
+function MoveActorAction(actor, path) {
    "use strict";
 
    this.actor = actor;
    this.path = path;
-   this.callback = callback;
 
    this.elapsedTime = 0;
 
@@ -73,8 +94,7 @@ MoveActorAction.prototype.update = function(interval) {
       if (this.path.length === 0 || this.actor.getCurAP() === 0) {
          // Done
          this.path = [];
-         return this.callback();
-         //return null;
+         return this.endUpdate();
       }
 
    } else {
@@ -103,13 +123,11 @@ MoveActorAction.prototype.update = function(interval) {
 
 // Actor source
 // Actor target
-// function callback
-function MissileAction(source, target, callback) {
+function MissileAction(source, target) {
    "use strict";
 
    this.source = source;
    this.target = target;
-   this.callback = callback;
    this.coordsxy = {};
    this.elapsedTime = 0;
 
@@ -117,6 +135,7 @@ function MissileAction(source, target, callback) {
    this.source.decAP(1);
 }
 
+MissileAction.prototype = new ACTION();
 
 MissileAction.prototype.update = function (interval) {
   "use strict";
@@ -148,7 +167,7 @@ MissileAction.prototype.update = function (interval) {
 
         // TODO DeathAction, pass callback to it
      }
-     return self.callback();
+     return self.endUpdate();
   }
 
   return this;
@@ -173,12 +192,11 @@ MissileAction.prototype.render = function (ctx) {
 // Actor source
 // Actor target
 // function callback
-function MeleeAction(source, target, callback) {
+function MeleeAction(source, target) {
    "use strict";
 
    this.source = source;
    this.target = target;
-   this.callback = callback;
    this.coordsxy = {};
 
    this.elapsedTime = 0;
@@ -187,6 +205,7 @@ function MeleeAction(source, target, callback) {
    this.source.decAP(1);
 }
 
+MeleeAction.prototype = new ACTION();
 
 MeleeAction.prototype.update = function (interval) {
   "use strict";
@@ -219,7 +238,7 @@ MeleeAction.prototype.update = function (interval) {
 
         // TODO DeathAction, pass callback to it
      }
-     return self.callback();
+     return self.endUpdate();
   }
 
   return this;
@@ -245,11 +264,10 @@ MeleeAction.prototype.render = function (ctx) {
 // Wait Action
 // ----------------------------------------------------------------------------
 
-function WaitAction(time, callback) {
+function WaitAction(time) {
    "use strict";
 
    this.time = time;
-   this.callback = callback;
 
    this.elapsedTime = 0;
 }
@@ -264,7 +282,7 @@ WaitAction.prototype.update = function(interval) {
    this.elapsedTime += interval;
 
    if (this.elapsedTime > this.time) {
-      return this.callback();
+      return this.endUpdate();
    }
    return this;
 };
