@@ -110,11 +110,14 @@ function HEX() {
       this.xy = {};
       this.centerxy = {};
 
+      this.wall = false;
+      this.colour = '#d0d0d0';
+
+      this.actor = null;
+
       this.getHash = function () {
          return this.axial.hash();
       };
-
-      this.actor = null;
 
       this.hasActor = function () {
          return this.actor !== null;
@@ -135,8 +138,6 @@ function HEX() {
       this.isWall = function () {
          return this.wall;
       };
-      this.wall = false;
-      this.colour = '#d0d0d0';
    }
 
 
@@ -335,10 +336,6 @@ function HEX() {
       return cells[hash];
    }
 
-   function getShowIds() {
-      return isShowIds;
-   }
-
    function setShowIds(v) {
       isShowIds = v;
    }
@@ -517,7 +514,6 @@ function HEX() {
          return distance(c1, c2) === 1;
       },
 
-      getShowIds: getShowIds,
       setShowIds: setShowIds,
 
       // expose in developer tools

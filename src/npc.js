@@ -9,3 +9,7 @@ function NPC() {
 
 NPC.prototype = new ACTOR();
 
+//NPC.prototype.init = function(startCell) {
+//   "use strict";
+//   return Object.getPrototypeOf(this).init(startCell);
+//};

@@ -1,5 +1,7 @@
-/* globals UTILS */
+/* globals UTILS, NOISY */
 /* exported ACTOR, DAMAGE */
+
+var gid = 0;
 
 function ACTOR() {
    "use strict";
@@ -18,6 +20,11 @@ function ACTOR() {
    this.turnAP = 3;
 }
 
+ACTOR.prototype.name = function() {
+   "use strict";
+   return 'id:' + this.id + ' loc:' + this.currentCell.getHash();
+};
+
 // Params
 // Return this
 ACTOR.prototype.init = function(startCell) {
@@ -26,6 +33,8 @@ ACTOR.prototype.init = function(startCell) {
    this.centerxy = UTILS.copyCellCenter(startCell);
 
    this.currentCell.setActor(this);
+
+   this.id = ++gid;
 
    return this;
 };
@@ -120,6 +129,14 @@ ACTOR.prototype.render = function(ctx, image) {
       this.centerxy.x - 35,
       this.centerxy.y - 35
    );
+
+   if (NOISY.isShowOverlay) {
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = "18px Serif";
+      ctx.fillText(this.id, this.centerxy.x-5, this.centerxy.y-5);
+      ctx.restore();
+   }
 
    // rectangle
    // points in rectangle

@@ -46,3 +46,15 @@ UTILS.copyCellCenter = function(cell) {
       y : cell.centerxy.y
    };
 };
+
+// path - array of Cells
+UTILS.outputPath = function(path) {
+   "use strict";
+   var str = '';
+
+   path.forEach(function (c) {
+      str = str + c.getHash() + ' ';
+   });
+
+   return str;
+};

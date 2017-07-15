@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,COMPUTER,MoveActorAction,MissileAction,MeleeAction*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction*/
 
 /*
  * Control Scheme
@@ -8,7 +8,7 @@
  *
  * mode action
  *   mouse highlights cell (target) with red border and all cells from source
- *
+ *calculateActorView
  * mouse click
  *    mode select -> mode action
  *    mode action -> mode select
@@ -37,7 +37,7 @@ NOISY.selectableActorCell = null;
 NOISY.selPlayer = null;
 
 NOISY.selPlayerView = {
-   // Cells that are reachable with current action points
+   // Cells that can be moved to (reachable) with current action points
    reachableCells: [],
 
    // Cells that are targetable with current weoponary
@@ -71,7 +71,8 @@ NOISY.keymap = {
 // Holds the keys currently pressed
 NOISY.keydown = {};
 
-NOISY.isShowIds = true;
+// true for show overlays, such as tile ids
+NOISY.isShowOverlay = false;
 
 //
 // Return: boolean true for user input is allowed
@@ -97,14 +98,16 @@ NOISY.coordsToCell = function (canvas, e) {
    return NOISY.hexgrid.selectHex(x, y);
 };
 
+// New Move Input from User (e.g. mouse)
 // Calculate state based upon the given cell
 //
 // Params
 // Cell: the cell under the mouse. May be null
-NOISY.handleMoveInput = function (cell) {
+// Boolean skipCheck: leave undefined to perform the input check or set to true to skip
+NOISY.handleMoveInput = function (cell, skipCheck) {
    "use strict";
 
-   if (!NOISY.userInputAllowed()) {
+   if (skipCheck === undefined && !NOISY.userInputAllowed()) {
       return;
    }
 
@@ -257,6 +260,9 @@ NOISY.endPlayerAction = function () {
          // this means the player moved, so recalculate the reachable
          // cells and targets
          NOISY.handleMoveInput(NOISY.selPlayer.getCell());
+      } else {
+         // skip the allowed user input check
+         NOISY.handleMoveInput(NOISY.userSelectedCell, true);
       }
 
       NOISY.selectableActorCell = null;
@@ -471,7 +477,7 @@ NOISY.loadMap = function (map) {
    });
 
    map.goblin.forEach(function (g) {
-      NOISY.npcs.push(new NPC().init(NOISY.hexgrid.getCell(g)));
+      NOISY.npcs.push(new NPC().init(NOISY.hexgrid.getCell(g.start)));
    });
 };
 
@@ -533,7 +539,8 @@ NOISY.run = function () {
             break;
 
          case 110 :  // 'n'
-            NOISY.hexgrid.setShowIds(!NOISY.hexgrid.getShowIds());
+            NOISY.isShowOverlay = !NOISY.isShowOverlay;
+            NOISY.hexgrid.setShowIds(NOISY.isShowOverlay);
             break;
 
          default:

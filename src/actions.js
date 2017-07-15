@@ -1,28 +1,38 @@
 /* globals UTILS, NOISY */
 /* exported ACTION, MoveActorAction, MissileAction, MeleeAction */
 
-
-// Might rename Actions to Animations.
-// Every Action has update() and render().
+// ACTION is meant to be called on the main input loop. They are primarily
+// designed for animations and the computer turn.
 //
+// Action has two main functions, update() and render().
+//
+// update() performs the action. It should always call endUpdate() which
+// will return
+
 // update() returns an Action or null. Null means that control returns to the
 // main input loop (e.g.the player). Anything else is the action that is
 // currently happening.
 // e.g. actions can be chained by returning another action.
 
+
+
 function ACTION() {}
 
+// function callback - the function to call when the action has finished
 ACTION.prototype.setCallback = function(callback) {
    "use strict";
    this.callback = callback;
+   this.nextAction = undefined;
    return this;
-}
+};
 
+// ACTION action - the next action in the chain when this action has finished
 ACTION.prototype.setNextAction = function(action) {
    "use strict";
    this.nextAction = action;
+   this.callback = undefined;
    return this;
-}
+};
 
 ACTION.prototype.endUpdate = function() {
    "use strict";
@@ -33,7 +43,7 @@ ACTION.prototype.endUpdate = function() {
       return this.nextAction;
    }
    throw new Error("ACTION does not have callback or nextAction defined");
-}
+};
 
 ACTION.prototype.update = function(/*interval*/) {
    "use strict";
@@ -213,6 +223,7 @@ MeleeAction.prototype.update = function (interval) {
       self = this;
 
   self.elapsedTime += interval;
+
 
   if (self.elapsedTime < animationTime) {
 

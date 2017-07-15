@@ -4,16 +4,18 @@ _Part of my Learning JavaScript series_
 
 Everything is better with Programmer Art (TM).
 
+The aim is to use plain JavaScript with no toolchain just for learning purposes. Initially everything is HTML and Canvas.
+
+   * let is not available in Safarif9 (would need a transpiler)
+
+May need to look at WebGL as mobile performance is so far quite bad.
+
 ## TODO
 
 * when in acton mode, if click on another player then switch to that one
+* key press/button to switch to next player with free action points
 * moving opponents heat seeking AI
 * field of view
-
-## JavaScript
-
-let is not available in Safari9
-should be using a transpiler but haven't set up a toolchain yet
 
 ## control scheme
 
@@ -60,11 +62,6 @@ current
 - loop through all possible targets checking to see if they are in range
 
 need proper field of view
-
-
-technology
-webGL
-canvas
 
 ## concepts
 
