@@ -1,12 +1,13 @@
 /*globals ACTOR*/
 /* exported PLAYER */
 
-function PLAYER() {
+function PLAYER(startCell) {
    "use strict";
 
-   this.imageName = "player";
+   ACTOR.call(this, 'player', startCell);
+
    this.isPlayer_ = true;
 }
 
-PLAYER.prototype = new ACTOR();
+PLAYER.prototype = Object.create(ACTOR.prototype);
 

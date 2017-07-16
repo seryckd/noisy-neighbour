@@ -473,11 +473,11 @@ NOISY.loadMap = function (map) {
    NOISY.hexgrid.init(MAPS.one);
 
    map.dwarf.forEach(function (d) {
-      NOISY.players.push(new PLAYER().init(NOISY.hexgrid.getCell(d)));
+      NOISY.players.push(new PLAYER(NOISY.hexgrid.getCell(d)));
    });
 
-   map.goblin.forEach(function (g) {
-      NOISY.npcs.push(new NPC().init(NOISY.hexgrid.getCell(g.start)));
+   map.goblin.forEach(function (info) {
+      NOISY.npcs.push(new NPC(info));
    });
 };
 

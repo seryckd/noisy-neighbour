@@ -76,7 +76,7 @@ function MoveActorAction(actor, path) {
    this.centerxy = UTILS.copyCellCenter(this.cell);
 }
 
-MoveActorAction.prototype = new ACTION();
+MoveActorAction.prototype = Object.create(ACTION.prototype);
 
 // update
 // Update the Actor's position as it moves through the path
@@ -145,7 +145,7 @@ function MissileAction(source, target) {
    this.source.decAP(1);
 }
 
-MissileAction.prototype = new ACTION();
+MissileAction.prototype = Object.create(ACTION.prototype);
 
 MissileAction.prototype.update = function (interval) {
   "use strict";
@@ -215,7 +215,7 @@ function MeleeAction(source, target) {
    this.source.decAP(1);
 }
 
-MeleeAction.prototype = new ACTION();
+MeleeAction.prototype = Object.create(ACTION.prototype);
 
 MeleeAction.prototype.update = function (interval) {
   "use strict";
@@ -283,7 +283,7 @@ function WaitAction(time) {
    this.elapsedTime = 0;
 }
 
-WaitAction.prototype = new ACTION();
+WaitAction.prototype = Object.create(ACTION.prototype);
 
 // long interval
 // return this action, another action or null

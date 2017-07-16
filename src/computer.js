@@ -38,6 +38,8 @@ ComputerAction.prototype.update = function() {
    return action;
 };
 
+
+
 // generate an action
 // callback
 // Return Action
@@ -54,6 +56,15 @@ ComputerAction.prototype.actorTurn = function(actor) {
 //   return new SnipeStrategy(actor, pathfinding, self);
    return chargeStrategy(actor, pathfinding, self);
 };
+
+
+function STRATEGY(actor_) {
+   "use strict";
+
+   this.actor = actor_;
+}
+
+STRATEGY.prototype.update = function(/*pathfinding, nextAction*/) {};
 
 // actor 1 - sniper
 // is player a neighbour

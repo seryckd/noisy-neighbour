@@ -3,21 +3,22 @@
 
 var gid = 0;
 
-function ACTOR() {
+function ACTOR(imageName_, startCell) {
    "use strict";
 
-   // Expect init() to be called
-   this.currentCell = null;
-   this.centerxy = null;
+   this.currentCell = startCell;
+   this.currentCell.setActor(this);
+   this.centerxy = UTILS.copyCellCenter(startCell);
 
-   // Expect to be set by supertypes
-   this.imageName = "N/A";
+   this.imageName = imageName_;
 
    this.isPlayer_ = false;
 
    this.health = 10;
    this.curAP = 3;
    this.turnAP = 3;
+
+   this.id = ++gid;
 }
 
 ACTOR.prototype.name = function() {
@@ -25,19 +26,6 @@ ACTOR.prototype.name = function() {
    return 'id:' + this.id + ' loc:' + this.currentCell.getHash();
 };
 
-// Params
-// Return this
-ACTOR.prototype.init = function(startCell) {
-   "use strict";
-   this.currentCell = startCell;
-   this.centerxy = UTILS.copyCellCenter(startCell);
-
-   this.currentCell.setActor(this);
-
-   this.id = ++gid;
-
-   return this;
-};
 
 ACTOR.prototype.isPlayer = function() {
    "use strict";

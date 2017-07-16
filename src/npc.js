@@ -1,15 +1,16 @@
-/*globals ACTOR */
+/*globals ACTOR, NOISY */
 /* exported NPC */
 
-function NPC() {
+function NPC(info) {
    "use strict";
 
-   this.imageName = "goblin";
+   ACTOR.call(this, 'goblin', NOISY.hexgrid.getCell(info.start));
+   this.strategy = info.strategy;
+
 }
 
-NPC.prototype = new ACTOR();
+NPC.prototype = Object.create(ACTOR.prototype);
 
-//NPC.prototype.init = function(startCell) {
-//   "use strict";
-//   return Object.getPrototypeOf(this).init(startCell);
-//};
+NPC.prototype.CHARGE_STRATEGY = "charge";
+NPC.prototype.SNIPE_STRATEGY = "snipe";
+
