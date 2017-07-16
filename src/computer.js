@@ -1,5 +1,5 @@
 /* globals NOISY, PATHFINDING, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS */
-/* exported COMPUTER */
+/* exported COMPUTER, CHARGESTRATEGY, SNIPESTRATEGY */
 
 // Created to handle a turn.
 function ComputerAction(actors) {
@@ -53,8 +53,7 @@ ComputerAction.prototype.actorTurn = function(actor) {
       return null;
    }
 
-//   return new SnipeStrategy(actor, pathfinding, self);
-   return chargeStrategy(actor, pathfinding, self);
+   return actor.strategy.update(pathfinding, self);
 };
 
 
@@ -66,6 +65,14 @@ function STRATEGY(actor_) {
 
 STRATEGY.prototype.update = function(/*pathfinding, nextAction*/) {};
 
+
+function SNIPESTRATEGY(actor) {
+   "use strict";
+   STRATEGY.call(this, actor);
+}
+
+SNIPESTRATEGY.prototype = Object.create(STRATEGY.prototype);
+
 // actor 1 - sniper
 // is player a neighbour
 //   close cobat
@@ -73,8 +80,7 @@ STRATEGY.prototype.update = function(/*pathfinding, nextAction*/) {};
 //   fire
 // can see a player out of range
 //   move towards it
-
-function snipeStrategy(actor, pathfinding, nextAction) {
+SNIPESTRATEGY.prototype.update = function(pathfinding, nextAction) {
 
    "use strict";
    var targets = [],
@@ -82,16 +88,16 @@ function snipeStrategy(actor, pathfinding, nextAction) {
       path = [];
 
    // sorted list by path length
-   targets = pathfinding.findTargetablePaths(actor.currentCell, NOISY.players, 8);
+   targets = pathfinding.findTargetablePaths(this.actor.currentCell, NOISY.players, 8);
 
    if (targets.length > 0) {
 
       target = targets[0];
       console.log('SNIPE found:' + target.actor.getCell().getHash());
 
-      if (NOISY.hexgrid.distance(actor.getCell(), target.actor.getCell()) < actor.getMissileRange()) {
+      if (NOISY.hexgrid.distance(this.actor.getCell(), target.actor.getCell()) < this.actor.getMissileRange()) {
          console.log('SNIPE fire');
-         return new MissileAction(actor, target.actor)
+         return new MissileAction(this.actor, target.actor)
             .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
       } else {
          path = target.path;
@@ -100,17 +106,25 @@ function snipeStrategy(actor, pathfinding, nextAction) {
          path.pop();
          console.log('SNIPE move');
 
-         return new MoveActorAction(actor, path)
+         return new MoveActorAction(this.actor, path)
             .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
       }
 
    } else {
       console.log('SNIPE no targets');
-      actor.clearAP();
+      this.actor.clearAP();
    }
 
    return null;
+};
+
+
+function CHARGESTRATEGY(actor) {
+   "use strict";
+   STRATEGY.call(this, actor);
 }
+
+CHARGESTRATEGY.prototype = Object.create(STRATEGY.prototype);
 
 // actor 2 - Leeroy
 // is player a neighbour
@@ -119,7 +133,7 @@ function snipeStrategy(actor, pathfinding, nextAction) {
 // pick closest player
 //   move towards
 
-function chargeStrategy(actor, pathfinding, nextAction) {
+CHARGESTRATEGY.prototype.update = function(pathfinding, nextAction) {
 
    "use strict";
    var targets = [],
@@ -128,20 +142,20 @@ function chargeStrategy(actor, pathfinding, nextAction) {
       dist;
 
    // sorted list by path length
-   targets = pathfinding.findTargetablePaths(actor.currentCell, NOISY.players, 4);
+   targets = pathfinding.findTargetablePaths(this.actor.currentCell, NOISY.players, 4);
 
    if (targets.length > 0) {
 
       target = targets[0];
       console.log('CHARGE found:' + target.actor.getCell().getHash());
 
-      dist = NOISY.hexgrid.distance(actor.getCell(), target.actor.getCell());
+      dist = NOISY.hexgrid.distance(this.actor.getCell(), target.actor.getCell());
 
  //     if (NOISY.hexgrid.distance(actor.getCell(), target.actor.getCell()) === 1) {
       if (dist === 1) {
          console.log('CHARGE close combat');
 
-         return new MeleeAction(actor, target.actor)
+         return new MeleeAction(this.actor, target.actor)
             .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
       } else {
 
@@ -152,17 +166,17 @@ function chargeStrategy(actor, pathfinding, nextAction) {
 
          console.log('CHARGE move dist:' + dist + ' path:' + UTILS.outputPath(path));
 
-         return new MoveActorAction(actor, path)
+         return new MoveActorAction(this.actor, path)
             .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
       }
 
    } else {
       console.log('CHARGE no targets');
-      actor.clearAP();
+      this.actor.clearAP();
    }
 
    return null;
-}
+};
 
 
 
