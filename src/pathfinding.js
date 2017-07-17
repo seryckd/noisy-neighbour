@@ -51,7 +51,7 @@ function PATHFINDING(hexgridf) {
       };
 
       this.isWalkable = function () {
-         return !this.cell.isWall();
+         return !this.cell.isWall() && !this.cell.hasActor();
       };
 
       this.getHash = function () {
@@ -110,9 +110,11 @@ function PATHFINDING(hexgridf) {
 
          node = to_node(neighbour);
 
-         if (!node.isWalkable() || closeMap.has(node.getHash())) {
-            // Node that should not be considered
-            return;
+         if (node !== targetNode) {
+            if (!node.isWalkable() || closeMap.has(node.getHash())) {
+               // Node that should not be considered
+               return;
+            }
          }
 
          if (!openMap.has(node.getHash())) {
@@ -143,6 +145,9 @@ function PATHFINDING(hexgridf) {
 
    }
 
+   // Internal
+   // Generate a path from a list of nodes
+   //
    // Params
    // Node node
    function calculatePath(node) {
@@ -154,12 +159,15 @@ function PATHFINDING(hexgridf) {
          node = node.parent;
       }
 
-      // Remove the starting cell as it is the start cell
+      // Remove the first cell as it is the start cell the
       path.shift();
 
       return path;
    }
 
+   // Find a path between two cells that avoids any cell
+   // wherer Node.isWalkable() returns false.
+   // e.g. avoids Walls or Actors.
    //
    // hexgrid:
    // Cell start: starting cell
@@ -195,6 +203,9 @@ function PATHFINDING(hexgridf) {
    }
 
    // Breadth First Search
+   // Return all cells that can be reached from the start cells within
+   // a given range. Stop if we get to a Wall or another Actor.
+   //
    // Params
    // Cell startCell
    // int movePoints
@@ -239,9 +250,68 @@ function PATHFINDING(hexgridf) {
       return reachable;
    }
 
+   // Return an array of cells that contain actors with the given range
+   // Param: Cell
+   // Param: Actors[]
+   // Param: integer
+   // Return Cell[]
+   function findTargetable(startCell, actors, range) {
+
+      var cells = [],
+         filtered = actors.filter(function (a) {
+            return hexgrid.distance(startCell, a.getCell()) <= range;
+         });
+
+      filtered.forEach(function (a) {
+         cells.push(a.getCell());
+      });
+
+      return cells.filter(function (c) {
+         return hexgrid.hasLineOfSight(startCell, c);
+      });
+   }
+
+   // Find the subset of actors whose path is within the given range
+   // Sort by path length
+   //
+   // Return object
+   // { actor: actor, path: cel[] }
+   function findTargetablePaths(startCell, actors, range) {
+      var result = [],
+          path;
+
+      actors.forEach(function (a) {
+         path = findPath(startCell, a.getCell());
+         if (path !== null && path.length <= range) {
+            result.push({
+               "actor": a,
+               "path": path
+            });
+         }
+      });
+
+      // Sort the result by ascending path length
+      result.sort(function (a, b) {
+         return a.path.length - b.path.length;
+      });
+
+      return result;
+   }
+
    return {
+
+      // Find a path between two cells avoiding any obstacles
       findPath: findPath,
-      findReachable: findReachable
+
+      // Find all cells with no obstacles that are within a given range
+      findReachable: findReachable,
+
+      // Find all other actors within a given range
+      findTargetable: findTargetable,
+
+      // Return the paths to the subset of given actors that
+      // are within a given range
+      findTargetablePaths: findTargetablePaths
    };
 
 }
