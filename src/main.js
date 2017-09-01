@@ -148,10 +148,10 @@ NOISY.calculateActorView = function (actor) {
       view = {};
 
    view.reachableCells = new PATHFINDING(NOISY.hexgrid)
-      .findReachable(cell, actor.getCurAP());
+      .findReachableCells(cell, actor.getCurAP());
 
    view.targetableCells = new PATHFINDING(NOISY.hexgrid)
-      .findTargetable(cell, NOISY.npcs, actor.getMissileRange());
+      .findTargetableCells(cell, NOISY.npcs, actor.getMissileRange());
 
    view.pathCells = [];
 

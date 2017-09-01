@@ -10,6 +10,8 @@ The aim is to use plain JavaScript with no toolchain just for learning purposes.
 
 May need to look at WebGL as mobile performance is so far quite bad.
 
+Take a look at http://seryckd.github.io/noisy-neighbour/src/index.html
+
 ## TODO
 
 * when in acton mode, if click on another player then switch to that one
