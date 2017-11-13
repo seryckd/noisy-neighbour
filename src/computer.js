@@ -1,27 +1,45 @@
-/* globals NOISY, PATHFINDING, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS */
+/* globals NOISY, ASTAR, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS, DIFFUSION */
 /* exported COMPUTER, CHARGESTRATEGY, SNIPESTRATEGY */
 
-// Created to handle a turn.
+
+// ----------------------------------------------------------------------------
+// Computer Action
+// ----------------------------------------------------------------------------
+
+// Computer Action handles the computer turn. It spawns movement and combat actions
+// until the Computer turn is finished.
+
 function ComputerAction(actors) {
    "use strict";
 
-   this.actors = actors.slice(0);
+   // take a copy of the actor list as we are going to modify it
+   this.actors = actors.slice();
 }
 
 ComputerAction.prototype = new ACTION();
 
-
 // Selects the actor to do the next action
 // Actor[]
-// Return Action
+// Return Action or null
 ComputerAction.prototype.update = function() {
    "use strict";
    var action = null,
-      actor;
+      actor,
+      startActors = this.actors.slice();
+
+   if (this.diffusion === undefined) {
+      this.diffusion = new DIFFUSION(NOISY.hexgrid);
+      this.diffusion.init(NOISY.players, startActors);
+      this.diffusion.diffuse(10);
+   }
 
    while (action === null && this.actors.length !== 0) {
       if (this.actors[0].getCurAP() === 0) {
          this.actors.shift();
+
+         this.diffusion.init(NOISY.players, startActors);
+         this.diffusion.diffuse(10);
+
          continue;
       }
 
@@ -47,7 +65,7 @@ ComputerAction.prototype.actorTurn = function(actor) {
    "use strict";
 
    var self = this,
-       pathfinding = new PATHFINDING(NOISY.hexgrid);
+       pathfinding = new ASTAR(NOISY.hexgrid);
 
    if (actor.getCurAP() === 0) {
       return null;
@@ -56,6 +74,9 @@ ComputerAction.prototype.actorTurn = function(actor) {
    return actor.strategy.update(pathfinding, self);
 };
 
+// ----------------------------------------------------------------------------
+// Computer Strategy
+// ----------------------------------------------------------------------------
 
 function STRATEGY(actor_) {
    "use strict";
@@ -65,6 +86,17 @@ function STRATEGY(actor_) {
 
 STRATEGY.prototype.update = function(/*pathfinding, nextAction*/) {};
 
+// ----------------------------------------------------------------------------
+// Strategy - Snipe
+//
+// actor 1 - sniper
+// is player a neighbour
+//   close combat
+// is player in range
+//   fire
+// can see a player out of range
+//   move towards it
+// ----------------------------------------------------------------------------
 
 function SNIPESTRATEGY(actor) {
    "use strict";
@@ -73,13 +105,6 @@ function SNIPESTRATEGY(actor) {
 
 SNIPESTRATEGY.prototype = Object.create(STRATEGY.prototype);
 
-// actor 1 - sniper
-// is player a neighbour
-//   close cobat
-// is player in range
-//   fire
-// can see a player out of range
-//   move towards it
 SNIPESTRATEGY.prototype.update = function(pathfinding, nextAction) {
 
    "use strict";
@@ -87,28 +112,36 @@ SNIPESTRATEGY.prototype.update = function(pathfinding, nextAction) {
       target,
       path = [];
 
-   // sorted list by path length
+   // list of cells sorted by length
+   targets = pathfinding.findTargetableCells(this.actor.currentCell, NOISY.players, 8);
+
+   if (targets.length > 0) {
+      // fire on the closest one
+      // TODO may need to check for close combat instead of firing
+      console.log('SNIPE fire');
+      return new MissileAction(this.actor, targets[0].actor)
+         .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
+   }
+
+   // nothing to fire at. Can we find a target to move towards?
+
+   // list of objects { actor: x, path: cell[]}
+   // ordered by distance
    targets = pathfinding.findTargetablePaths(this.actor.currentCell, NOISY.players, 8);
 
    if (targets.length > 0) {
 
       target = targets[0];
-      console.log('SNIPE found:' + target.actor.getCell().getHash());
+      console.log('SNIPE found:' + target.actor.getCell().getHash() + ' distance: ' + target.path.length);
 
-      if (NOISY.hexgrid.distance(this.actor.getCell(), target.actor.getCell()) < this.actor.getMissileRange()) {
-         console.log('SNIPE fire');
-         return new MissileAction(this.actor, target.actor)
-            .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
-      } else {
-         path = target.path;
+      path = target.path;
 
-         // the last element is the target, remove that so we stop at it
-         path.pop();
-         console.log('SNIPE move');
+      // the last element is the target, remove that so we stop at it
+      path.pop();
+      console.log('SNIPE move ' + path);
 
-         return new MoveActorAction(this.actor, path)
-            .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
-      }
+      return new MoveActorAction(this.actor, path)
+         .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
 
    } else {
       console.log('SNIPE no targets');
@@ -118,6 +151,16 @@ SNIPESTRATEGY.prototype.update = function(pathfinding, nextAction) {
    return null;
 };
 
+// ----------------------------------------------------------------------------
+// Strategy - Charge
+//
+// actor 2 - Leeroy
+// is player a neighbour
+//   pick weakest one
+//   close combat
+// pick closest player
+//   move towards
+// ----------------------------------------------------------------------------
 
 function CHARGESTRATEGY(actor) {
    "use strict";
@@ -125,13 +168,6 @@ function CHARGESTRATEGY(actor) {
 }
 
 CHARGESTRATEGY.prototype = Object.create(STRATEGY.prototype);
-
-// actor 2 - Leeroy
-// is player a neighbour
-//   pick weakest one
-//   close combat
-// pick closest player
-//   move towards
 
 CHARGESTRATEGY.prototype.update = function(pathfinding, nextAction) {
 
@@ -149,9 +185,8 @@ CHARGESTRATEGY.prototype.update = function(pathfinding, nextAction) {
       target = targets[0];
       console.log('CHARGE found:' + target.actor.getCell().getHash());
 
-      dist = NOISY.hexgrid.distance(this.actor.getCell(), target.actor.getCell());
+      dist = pathfinding.distanceBetweenCells(this.actor.getCell(), target.actor.getCell());
 
- //     if (NOISY.hexgrid.distance(actor.getCell(), target.actor.getCell()) === 1) {
       if (dist === 1) {
          console.log('CHARGE close combat');
 
@@ -175,6 +210,39 @@ CHARGESTRATEGY.prototype.update = function(pathfinding, nextAction) {
       this.actor.clearAP();
    }
 
+   return null;
+};
+
+// ----------------------------------------------------------------------------
+// Strategy - Collaborative
+// ----------------------------------------------------------------------------
+
+function COLLABSTRATEGY(actor) {
+   "use strict";
+   STRATEGY.call(this, actor);
+}
+
+COLLABSTRATEGY.prototype = Object.create(STRATEGY.prototype);
+
+COLLABSTRATEGY.prototype.update = function(pathfinding, nextAction) {
+   "use strict";
+
+   var path = [];
+
+   path = nextAction.diffusion.hillClimb(this.actor.getCell(), 10);
+
+   if (path.length > 0) {
+
+      if (!path[0].hasActor()) {
+         return new MoveActorAction(this.actor, path.slice(0, 1))
+               .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
+      } else if (path[0].getActor().isPlayer()) {
+         return new MeleeAction(this.actor, path[0].getActor())
+            .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
+      }
+   }
+
+   this.actor.clearAP();
    return null;
 };
 

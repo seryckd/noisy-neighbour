@@ -307,7 +307,6 @@ function HEX() {
    // Params
    // Context
    function render(ctx) {
-
       ctx.lineWidth = 1;
 
       if (isShowIds) {
@@ -317,10 +316,13 @@ function HEX() {
       }
 
       each(function (cell) {
+
          drawHexPath(ctx, cell, hexSize);
 
          ctx.strokeStyle = 'black';
+
          ctx.fillStyle = cell.colour;
+
          ctx.fill();
          //ctx.stroke();
 
@@ -328,6 +330,7 @@ function HEX() {
             ctx.strokeStyle = '#808080';
             ctx.strokeText(cell.getHash(), cell.centerxy.x, cell.centerxy.y);
          }
+
       });
    }
 

@@ -1,4 +1,4 @@
-/* exported PATHFINDING */
+/* exported ASTAR */
 
 // Implementation of A* using distance between cells as heuristic
 // Every cell has same G value
@@ -8,7 +8,7 @@
 // Should also look here
 // http://theory.stanford.edu/~amitp/GameProgramming/
 
-function PATHFINDING(hexgridf) {
+function ASTAR(hexgridf) {
   "use strict";
 
    var hexgrid = hexgridf,
@@ -16,16 +16,16 @@ function PATHFINDING(hexgridf) {
       closeMap = new Map(),
       mapCellToNodes = {};
 
-//   function outputCells(cells) {
-//      var o = '';
-//
-//      cells.forEach(function (c) {
-//         o += c.getHash();
-//         o += ',';
-//      });
-//
-//      return o;
-//   }
+   function outputCells(cells) {
+      var o = '';
+
+      cells.forEach(function (c) {
+         o += c.getHash();
+         o += ',';
+      });
+
+      return o;
+   }
 
 //   function outputNodes(nodes) {
 //      var o = '';
@@ -197,7 +197,7 @@ function PATHFINDING(hexgridf) {
          processNeighbours(currentNode, hexgrid.adjacent(currentNode.cell), endNode);
       }
 
-      //console.log('path: ' + outputCells(path));
+      console.log('path: ' + outputCells(path));
 
       return path;
    }
@@ -210,7 +210,7 @@ function PATHFINDING(hexgridf) {
    // Cell startCell
    // int movePoints
    // Return Map<Cell> cells that can be reached, excluding the start cell
-   function findReachable(startCell, movePoints) {
+   function findReachableCells(startCell, movePoints) {
 
       var frontier = [],
           reachable = new Map(),
@@ -255,7 +255,7 @@ function PATHFINDING(hexgridf) {
    // Param: Actors[]
    // Param: integer
    // Return Cell[]
-   function findTargetable(startCell, actors, range) {
+   function findTargetableCells(startCell, actors, range) {
 
       var cells = [],
          filtered = actors.filter(function (a) {
@@ -275,14 +275,14 @@ function PATHFINDING(hexgridf) {
    // Sort by path length
    //
    // Return object
-   // { actor: actor, path: cel[] }
+   // { actor: actor, path: cell[] }
    function findTargetablePaths(startCell, actors, range) {
       var result = [],
           path;
 
       actors.forEach(function (a) {
          path = findPath(startCell, a.getCell());
-         if (path !== null && path.length <= range) {
+         if (path.length > 0 && path.length <= range) {
             result.push({
                "actor": a,
                "path": path
@@ -304,14 +304,21 @@ function PATHFINDING(hexgridf) {
       findPath: findPath,
 
       // Find all cells with no obstacles that are within a given range
-      findReachable: findReachable,
+      findReachableCells: findReachableCells,
 
-      // Find all other actors within a given range
-      findTargetable: findTargetable,
+      // Find all other actors that have a clear Line of Sight and are
+      // in a given range
+      findTargetableCells: findTargetableCells,
 
       // Return the paths to the subset of given actors that
       // are within a given range
-      findTargetablePaths: findTargetablePaths
+      findTargetablePaths: findTargetablePaths,
+
+      // Return the number of cells in a straight line between cellA
+      // and cellB
+      distanceBetweenCells: function(cellA, cellB) {
+         return hexgrid.distance(cellA, cellB);
+      }
    };
 
 }

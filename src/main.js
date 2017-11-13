@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,DIFFUSION*/
 
 /*
  * Control Scheme
@@ -65,7 +65,9 @@ NOISY.keymap = {
    65 : 'left',         // 'a'
    68 : 'right',        // 'd'
    87 : 'up',           // 'w'
-   83 : 'down'          // 's'
+   83 : 'down',          // 's'
+   66 : 'init', // b
+   67 : 'spread' // c
 };
 
 // Holds the keys currently pressed
@@ -148,10 +150,10 @@ NOISY.calculateActorView = function (actor) {
       view = {};
 
    view.reachableCells = new PATHFINDING(NOISY.hexgrid)
-      .findReachable(cell, actor.getCurAP());
+      .findReachableCells(cell, actor.getCurAP());
 
    view.targetableCells = new PATHFINDING(NOISY.hexgrid)
-      .findTargetable(cell, NOISY.npcs, actor.getMissileRange());
+      .findTargetableCells(cell, NOISY.npcs, actor.getMissileRange());
 
    view.pathCells = [];
 
@@ -306,6 +308,11 @@ NOISY.update = function (interval) {
       NOISY.viewport.x -= velocity;
    }
 
+   // update whose turn it iss
+   if (NOISY.turnElement.innerHTML !== NOISY.turn) {
+      NOISY.turnElement.innerHTML = NOISY.turn;
+   }
+
    // -------------------------------------------------------------------------
    //  action
 
@@ -326,6 +333,15 @@ NOISY.update = function (interval) {
    // TODO need to control when endTurn is called
    if (NOISY.keydown.space === true) {
       NOISY.endTurn();
+   }
+
+   if (NOISY.keydown.init === true) {
+      window.globalaction =  new DIFFUSION(NOISY.hexgrid);
+      window.globalaction.init(NOISY.players, NOISY.npcs);
+   }
+   if (NOISY.keydown.spread === true) {
+      window.globalaction.diffuse(1);
+      NOISY.keydown.spread = false;
    }
 };
 
@@ -367,8 +383,6 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
    var ctx,
     mouseOverColour = '#00ff00',
     selectableColour = '#ff0040';
-
-   NOISY.turnElement.innerHTML = NOISY.turn;
 
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");

@@ -10,6 +10,8 @@ The aim is to use plain JavaScript with no toolchain just for learning purposes.
 
 May need to look at WebGL as mobile performance is so far quite bad.
 
+Take a look at http://seryckd.github.io/noisy-neighbour/src/index.html
+
 ## TODO
 
 * when in acton mode, if click on another player then switch to that one
@@ -63,6 +65,38 @@ current
 
 need proper field of view
 
+## collaborative diffusion
+
+[[Paper][http://www.cs.colorado.edu/~ralex/papers/PDF/OOPSLA06antiobjects.pdf]]
+WIP
+Goal Agents - every player
+Pursuer Agents - computer players
+Path Environment Agents - hexes with no obstacles
+Obstacle Environment Agents - hexes with walls
+
+At the beginning of the computer turn, calculate the diffusion map for each path environment agent.
+Each iteration will diffuse the scent of the players 1 path. To enable the computer to see players
+5 hexes away run the iteration 5 times.
+
+should Pursuer Agents diffuse the scent
+   none - each agent will block the path of another one. great if there is another path to the goal,
+       otherwise will cause only a single agent at a time to pursue
+   some - each agent will let some of the scent pass. this should result in another path being
+          more deserible, but if no other path is available then agents will follow same path
+   all -  each agent will have no affect on the diffusion. agents will all follow the same path
+
+diffusion equation
+
+u.center.new = u.center + diffusion.coefficent * sum.neighbours (u.neighbour - u.center)
+
+diffusion.coefficient is [0, 0.5]
+
+## performance improvements
+
+may have a problem with the canvas as it get s cleared and redrawn each time.
+look at multiple canvases (http://blog.sklambert.com/html5-canvas-game-the-player-ship/)
+or 'dirty rectangles' technique
+
 ## concepts
 
 dead bodies
@@ -74,6 +108,11 @@ dead bodies
 
 skill tree
    - instead of classes, actors have skill trees they can spend points in
+
+dark
+   - dark levels where map is not drawn. Still show players and targetting hexes when moving
+   - or level lights up from torches that players and enemies carry
+
 
 ## Noisy Neighbours
 

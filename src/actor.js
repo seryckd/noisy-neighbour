@@ -112,6 +112,7 @@ ACTOR.prototype.update = function(/*interval*/) {
 ACTOR.prototype.render = function(ctx, image) {
    "use strict";
 
+   //!!! slow to draw
    ctx.drawImage(
       image.image(this.imageName),
       this.centerxy.x - 35,

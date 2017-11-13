@@ -18,7 +18,7 @@
 
 function ACTION() {}
 
-// function callback - the function to call when the action has finished
+// function callback - the function to call when this action has finished
 ACTION.prototype.setCallback = function(callback) {
    "use strict";
    this.callback = callback;
