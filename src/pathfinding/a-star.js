@@ -1,4 +1,4 @@
-/* exported PATHFINDING */
+/* exported ASTAR */
 
 // Implementation of A* using distance between cells as heuristic
 // Every cell has same G value
@@ -8,7 +8,7 @@
 // Should also look here
 // http://theory.stanford.edu/~amitp/GameProgramming/
 
-function PATHFINDING(hexgridf) {
+function ASTAR(hexgridf) {
   "use strict";
 
    var hexgrid = hexgridf,

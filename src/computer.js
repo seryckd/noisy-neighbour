@@ -1,4 +1,4 @@
-/* globals NOISY, PATHFINDING, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS */
+/* globals NOISY, ASTAR, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS, DIFFUSION */
 /* exported COMPUTER, CHARGESTRATEGY, SNIPESTRATEGY */
 
 
@@ -13,11 +13,10 @@ function ComputerAction(actors) {
    "use strict";
 
    // take a copy of the actor list as we are going to modify it
-   this.actors = actors.slice(0);
+   this.actors = actors.slice();
 }
 
 ComputerAction.prototype = new ACTION();
-
 
 // Selects the actor to do the next action
 // Actor[]
@@ -25,11 +24,22 @@ ComputerAction.prototype = new ACTION();
 ComputerAction.prototype.update = function() {
    "use strict";
    var action = null,
-      actor;
+      actor,
+      startActors = this.actors.slice();
+
+   if (this.diffusion === undefined) {
+      this.diffusion = new DIFFUSION(NOISY.hexgrid);
+      this.diffusion.init(NOISY.players, startActors);
+      this.diffusion.diffuse(10);
+   }
 
    while (action === null && this.actors.length !== 0) {
       if (this.actors[0].getCurAP() === 0) {
          this.actors.shift();
+
+         this.diffusion.init(NOISY.players, startActors);
+         this.diffusion.diffuse(10);
+
          continue;
       }
 
@@ -55,7 +65,7 @@ ComputerAction.prototype.actorTurn = function(actor) {
    "use strict";
 
    var self = this,
-       pathfinding = new PATHFINDING(NOISY.hexgrid);
+       pathfinding = new ASTAR(NOISY.hexgrid);
 
    if (actor.getCurAP() === 0) {
       return null;
@@ -63,7 +73,6 @@ ComputerAction.prototype.actorTurn = function(actor) {
 
    return actor.strategy.update(pathfinding, self);
 };
-
 
 // ----------------------------------------------------------------------------
 // Computer Strategy
@@ -201,6 +210,39 @@ CHARGESTRATEGY.prototype.update = function(pathfinding, nextAction) {
       this.actor.clearAP();
    }
 
+   return null;
+};
+
+// ----------------------------------------------------------------------------
+// Strategy - Collaborative
+// ----------------------------------------------------------------------------
+
+function COLLABSTRATEGY(actor) {
+   "use strict";
+   STRATEGY.call(this, actor);
+}
+
+COLLABSTRATEGY.prototype = Object.create(STRATEGY.prototype);
+
+COLLABSTRATEGY.prototype.update = function(pathfinding, nextAction) {
+   "use strict";
+
+   var path = [];
+
+   path = nextAction.diffusion.hillClimb(this.actor.getCell(), 10);
+
+   if (path.length > 0) {
+
+      if (!path[0].hasActor()) {
+         return new MoveActorAction(this.actor, path.slice(0, 1))
+               .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
+      } else if (path[0].getActor().isPlayer()) {
+         return new MeleeAction(this.actor, path[0].getActor())
+            .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
+      }
+   }
+
+   this.actor.clearAP();
    return null;
 };
 
