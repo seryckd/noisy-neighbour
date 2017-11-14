@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,PATHFINDING,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,DIFFUSION*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,DIFFUSION*/
 
 /*
  * Control Scheme
@@ -122,7 +122,7 @@ NOISY.handleMoveInput = function (cell, skipCheck) {
              !cell.isWall() &&
              NOISY.selPlayerView.reachableCells.has(cell.getHash())) {
 
-            NOISY.selPlayerView.pathCells = new PATHFINDING(NOISY.hexgrid)
+            NOISY.selPlayerView.pathCells = new ASTAR(NOISY.hexgrid)
                .findPath(NOISY.selPlayer.getCell(), cell);
 
          } else {
@@ -149,10 +149,10 @@ NOISY.calculateActorView = function (actor) {
    var cell = actor.getCell(),
       view = {};
 
-   view.reachableCells = new PATHFINDING(NOISY.hexgrid)
+   view.reachableCells = new ASTAR(NOISY.hexgrid)
       .findReachableCells(cell, actor.getCurAP());
 
-   view.targetableCells = new PATHFINDING(NOISY.hexgrid)
+   view.targetableCells = new ASTAR(NOISY.hexgrid)
       .findTargetableCells(cell, NOISY.npcs, actor.getMissileRange());
 
    view.pathCells = [];
