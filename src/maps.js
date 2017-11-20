@@ -17,5 +17,24 @@ var MAPS = {
          { "start" : '(7,-3)', "strategy" : "collab"},
          { "start" : '(8,-3)', "strategy" : "collab"}
       ]
-   }
+   },
+   "two" : {
+      "width" : 12,
+      "height" : 10,
+      "walls" : [
+      ],
+      "dwarf" : ['(6,0)'],
+      "goblin" : [
+         { "start" : '(1,1)', "strategy" : "collab" },
+         { "start" : '(1,2)', "strategy" : "collab"},
+         { "start" : '(1,3)', "strategy" : "collab"},
+         { "start" : '(2,-1)', "strategy" : "collab"},
+         { "start" : '(2,2)', "strategy" : "collab"},
+         { "start" : '(3,3)', "strategy" : "collab"},
+         { "start" : '(2,0)', "strategy" : "collab"},
+         { "start" : '(2,3)', "strategy" : "collab"}
+      ]
+   },
+
+
 };

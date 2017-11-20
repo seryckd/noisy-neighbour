@@ -2,12 +2,16 @@
 
 <head>
    <style type="text/css">
+      html {
+         font-size: 16px;
+      }
+      select {
+         font-size: 16px;
+      }
       .header-parent {
          display: flex;
-         width: 200px;
-      }
-      .header-child {
-         margin: auto;
+         justify-content: space-between;
+         width: 600px;
       }
       canvas.viewport {
          border: 1px solid black;
@@ -17,7 +21,6 @@
       button {
          background-color: coral;
          border: 1px solid black;
-         font-size: 16px;
          text-align: center;
          padding: 10px 20px;
       }
@@ -27,12 +30,20 @@
 <body>
    <h1>Noisy Neighbours</h1>
    <div class="header-parent">
-      <button class="header-child" type="button" onclick="NOISY.endTurn()">End Turn</button>
-      <div class="header-child"><p id="turn">hello</p></div>
+      <button type="button" onclick="NOISY.endTurn()">End Turn</button>
+      <div><p id="turn">hello</p></div>
+
+      <label>Map<select name="selectMap" onchange="NOISY.resetMap(event)">
+           <option>one</option>
+           <option selected>two</option>
+           <option value="3">three</option>
+         </select>
+      </label>
    </div>
    <br/>
    <div><canvas id="viewport"/></div>
    <div><canvas id="dashboard"/></div>
+
    <script type="text/javascript" src="polyfills.js"></script>
    <script type="text/javascript" src="actions.js"></script>
    <script type="text/javascript" src="actor.js"></script>

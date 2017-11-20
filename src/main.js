@@ -246,6 +246,16 @@ NOISY.endTurn = function () {
 
 };
 
+// Called by User to change the map
+NOISY.resetMap = function (event) {
+   "use strict";
+   var mapName = event.target.value;
+
+   console.log('Changing map to ' + mapName);
+
+   NOISY.loadMap(MAPS[mapName]);
+};
+
 // Called after every action initiated by the user on the player
 NOISY.endPlayerAction = function () {
    "use strict";
@@ -484,7 +494,12 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
 NOISY.loadMap = function (map) {
    "use strict";
 
-   NOISY.hexgrid.init(MAPS.one);
+   NOISY.players = [];
+
+   NOISY.npcs = [];
+
+
+   NOISY.hexgrid.init(map);
 
    map.dwarf.forEach(function (d) {
       NOISY.players.push(new PLAYER(NOISY.hexgrid.getCell(d)));
@@ -521,7 +536,7 @@ NOISY.run = function () {
 
    NOISY.hexgrid = new HEX();
 
-   NOISY.loadMap(MAPS.one);
+   NOISY.loadMap(MAPS.two);
 
    // Track the mouse
    // Only call after setup globals

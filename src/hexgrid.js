@@ -182,6 +182,7 @@ function HEX() {
 
       console.log('map ' + map.width + 'x' + map.height);
 
+      cells = {};
       numCols = map.width;
       numRows = map.height;
       hexSize = 36;
