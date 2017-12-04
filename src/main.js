@@ -22,6 +22,9 @@ var TURN_COMPUTER = 'COMPUTER';
 NOISY.turn = TURN_PLAYER;
 NOISY.turnElement = {};
 
+// Set by loadMap() function
+NOISY.currentMap = {};
+
 var MODE_ACTION = 'a';
 var MODE_SELECT = 's';
 NOISY.mode = MODE_SELECT;
@@ -65,9 +68,10 @@ NOISY.keymap = {
    65 : 'left',         // 'a'
    68 : 'right',        // 'd'
    87 : 'up',           // 'w'
-   83 : 'down',          // 's'
-   66 : 'init', // b
-   67 : 'spread' // c
+   83 : 'down',         // 's'
+   82 : 'reset',        // 'r'
+   66 : 'init',         // 'b'
+   67 : 'spread'        // 'c'
 };
 
 // Holds the keys currently pressed
@@ -246,14 +250,20 @@ NOISY.endTurn = function () {
 
 };
 
-// Called by User to change the map
-NOISY.resetMap = function (event) {
+// Called from UI to select a different map
+NOISY.selectMap = function (event) {
    "use strict";
    var mapName = event.target.value;
 
    console.log('Changing map to ' + mapName);
 
    NOISY.loadMap(MAPS[mapName]);
+};
+
+// Called from UI to reset the current map
+NOISY.resetMap = function () {
+   "use strict";
+   NOISY.loadMap(NOISY.currentMap);
 };
 
 // Called after every action initiated by the user on the player
@@ -343,6 +353,10 @@ NOISY.update = function (interval) {
    // TODO need to control when endTurn is called
    if (NOISY.keydown.space === true) {
       NOISY.endTurn();
+   }
+
+   if (NOISY.keydown.reset === true) {
+      NOISY.resetMap();
    }
 
    if (NOISY.keydown.init === true) {
@@ -494,10 +508,11 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
 NOISY.loadMap = function (map) {
    "use strict";
 
+   NOISY.currentMap = map;
+
    NOISY.players = [];
 
    NOISY.npcs = [];
-
 
    NOISY.hexgrid.init(map);
 
@@ -536,7 +551,7 @@ NOISY.run = function () {
 
    NOISY.hexgrid = new HEX();
 
-   NOISY.loadMap(MAPS.two);
+   NOISY.loadMap(MAPS.one);
 
    // Track the mouse
    // Only call after setup globals

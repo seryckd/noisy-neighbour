@@ -2,14 +2,19 @@
 
 <head>
    <style type="text/css">
-      html {
-         font-size: 16px;
+      body, input, button, select, option, textarea {
+          font-family: Arial;
       }
-      select {
-         font-size: 16px;
+      body {
+          font-size: 16px;
       }
+      input, button, select, option, textarea {
+          font-size: 100%;
+      }
+
       .header-parent {
          display: flex;
+         align-items: center;
          justify-content: space-between;
          width: 600px;
       }
@@ -22,7 +27,7 @@
          background-color: coral;
          border: 1px solid black;
          text-align: center;
-         padding: 10px 20px;
+         padding: 5px 5px;
       }
    </style>
 </head>
@@ -33,12 +38,14 @@
       <button type="button" onclick="NOISY.endTurn()">End Turn</button>
       <div><p id="turn">hello</p></div>
 
-      <label>Map<select name="selectMap" onchange="NOISY.resetMap(event)">
+      <div>
+         <label>Map<select name="selectMap" onchange="NOISY.selectMap(event)">
            <option>one</option>
-           <option selected>two</option>
-           <option value="3">three</option>
-         </select>
-      </label>
+           <option>two</option>
+           <option>three</option>
+         </select></label>
+         <button type="button" onclick="NOISY.resetMap()">Reset Map</button>
+      </div>
    </div>
    <br/>
    <div><canvas id="viewport"/></div>
@@ -53,7 +60,7 @@
    <script type="text/javascript" src="maps.js"></script>
    <script type="text/javascript" src="hexgrid.js"></script>
    <script type="text/javascript" src="pathfinding/a-star.js"></script>
-   <script type="text/javascript" src="pathfinding/col-diff.js"></script>
+   <script type="text/javascript" src="pathfinding/diffusion.js"></script>
    <script type="text/javascript" src="npc.js"></script>
    <script type="text/javascript" src="computer.js"></script>
    <script type="text/javascript" src="main.js"></script>

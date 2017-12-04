@@ -20,7 +20,7 @@
       Goal Agent
          Agents that are pursued by other agents. They have a scent value.
       Path Agent
-         Diffuses the scent of Goal Agents.
+         Diffuses the scent of Goal Agents. (A hex tile)
       Pursuer Agent
          Pursues one or more Goals. Includes a goal selection mechanism.
       Obstacle Agent
@@ -31,6 +31,9 @@
 
 function DIFFUSION(hexgrid_) {
    "use strict";
+
+   // Map<hash, scent> sheet
+   // where hash is the Cell hash from hexgrid
 
    var hexgrid = hexgrid_,
       data1 = new Map(),         // keep two Maps and switch between them
@@ -74,6 +77,7 @@ function DIFFUSION(hexgrid_) {
       var temp = sheet;
       sheet = tmpSheet;
       tmpSheet = temp;
+      hexgrid.setScentMap(sheet);
    }
 
    function sum(els) {
@@ -97,7 +101,7 @@ function DIFFUSION(hexgrid_) {
 
       for (var [key, value] of sheet) {
 
-         // Goal Agents are always set the scent
+         // Goal Agents are always set to the scent
          if (-1 !== goals.indexOf(key)) {
             tmpSheet.set(key, value);
             continue;

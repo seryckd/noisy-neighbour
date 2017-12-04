@@ -35,6 +35,18 @@ var MAPS = {
          { "start" : '(2,3)', "strategy" : "collab"}
       ]
    },
-
+   "three" : {
+      "width" : 16,
+      "height" : 5,
+      "walls" : [
+         '(2,0)', '(3,0)', '(4,-1)', '(5,-1)',
+         '(2,2)', '(3,2)', '(4,1)', '(5,1)', '(7,-1)'
+      ],
+      "dwarf" : ['(0,2)'],
+      "goblin" : [
+         { "start" : '(8,-2)', "strategy" : "collab" },
+         { "start" : '(8,-1)', "strategy" : "collab" }
+      ]
+   }
 
 };

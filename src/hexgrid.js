@@ -57,7 +57,8 @@ function HEX() {
       hexPixelWidth,    // width of hex in pixels
       hexPixelHeight,   // height of hex in pixels
       hexSize,          // length of hexagon size
-      isShowIds = false;// display the cells ids
+      isShowIds = false,// display the cells ids
+      scentMap = new Map();
 
 
    // Hex represented in axial coords
@@ -308,6 +309,8 @@ function HEX() {
    // Params
    // Context
    function render(ctx) {
+      var scent;
+
       ctx.lineWidth = 1;
 
       if (isShowIds) {
@@ -321,17 +324,34 @@ function HEX() {
          drawHexPath(ctx, cell, hexSize);
 
          ctx.strokeStyle = 'black';
-
          ctx.fillStyle = cell.colour;
 
-         ctx.fill();
-         //ctx.stroke();
-
          if (isShowIds) {
-            ctx.strokeStyle = '#808080';
-            ctx.strokeText(cell.getHash(), cell.centerxy.x, cell.centerxy.y);
+            scent = scentMap.get(cell.getHash());
+            if (scent !== undefined) {
+               // Use log to take the large scent values and put them in a smaller range
+               // (-Infinity, range -10 to 10)
+               scent = Math.log2(scent);
+               if (scent === -Infinity) {
+                  scent = 0;
+               } else {
+                  // Slide result to the positive (range 0-20)
+                  // and then change to scale 0-255
+                  scent = Math.round((scent + 10) * (255 / 20));
+               }
+               ctx.fillStyle = 'rgb(' + scent + ',' + 0 + ',' + 0 + ')';
+            }
          }
 
+         ctx.fill();
+
+         if (isShowIds) {
+            ctx.strokeStyle = '#ffffff';
+            ctx.strokeText(cell.getHash(), cell.centerxy.x, cell.centerxy.y - 8);
+            if (scent !== undefined) {
+               ctx.strokeText(scent.toString(), cell.centerxy.x, cell.centerxy.y + 8);
+            }
+         }
       });
    }
 
@@ -524,7 +544,11 @@ function HEX() {
       cells: cells,
 
       // objects
-      Cell: Cell
+      Cell: Cell,
+
+      setScentMap: function (map) {
+         scentMap = map;
+      }
    };
 }
 //})();
