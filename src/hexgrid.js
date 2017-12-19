@@ -58,7 +58,8 @@ function HEX() {
       hexPixelHeight,   // height of hex in pixels
       hexSize,          // length of hexagon size
       isShowIds = false,// display the cells ids
-      scentMap = new Map();
+      scentMap = null;  // must implement
+                        // double get(cell_hash)
 
 
    // Hex represented in axial coords
@@ -184,6 +185,8 @@ function HEX() {
       console.log('map ' + map.width + 'x' + map.height);
 
       cells = {};
+      scentMap = null;
+
       numCols = map.width;
       numRows = map.height;
       hexSize = 36;
@@ -309,7 +312,8 @@ function HEX() {
    // Params
    // Context
    function render(ctx) {
-      var scent;
+      var scent,
+         scentColour;
 
       ctx.lineWidth = 1;
 
@@ -326,20 +330,20 @@ function HEX() {
          ctx.strokeStyle = 'black';
          ctx.fillStyle = cell.colour;
 
-         if (isShowIds) {
+         if (isShowIds && scentMap !== null) {
             scent = scentMap.get(cell.getHash());
             if (scent !== undefined) {
                // Use log to take the large scent values and put them in a smaller range
                // (-Infinity, range -10 to 10)
-               scent = Math.log2(scent);
-               if (scent === -Infinity) {
-                  scent = 0;
+               scentColour = Math.log2(scent);
+               if (scentColour === -Infinity) {
+                  scentColour = 0;
                } else {
                   // Slide result to the positive (range 0-20)
                   // and then change to scale 0-255
-                  scent = Math.round((scent + 10) * (255 / 20));
+                  scentColour = Math.round((scentColour + 10) * (255 / 20));
                }
-               ctx.fillStyle = 'rgb(' + scent + ',' + 0 + ',' + 0 + ')';
+               ctx.fillStyle = 'rgb(' + scentColour + ',' + 0 + ',' + 0 + ')';
             }
          }
 
@@ -349,7 +353,7 @@ function HEX() {
             ctx.strokeStyle = '#ffffff';
             ctx.strokeText(cell.getHash(), cell.centerxy.x, cell.centerxy.y - 8);
             if (scent !== undefined) {
-               ctx.strokeText(scent.toString(), cell.centerxy.x, cell.centerxy.y + 8);
+               ctx.strokeText(scent.toFixed(3).toString(), cell.centerxy.x, cell.centerxy.y + 8);
             }
          }
       });

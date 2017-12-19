@@ -12,6 +12,8 @@
 function ComputerAction(actors) {
    "use strict";
 
+   this.originalActors = actors;
+
    // take a copy of the actor list as we are going to modify it
    this.actors = actors.slice();
 }
@@ -24,12 +26,11 @@ ComputerAction.prototype = new ACTION();
 ComputerAction.prototype.update = function() {
    "use strict";
    var action = null,
-      actor,
-      startActors = this.actors.slice();
+      actor;
 
    if (this.diffusion === undefined) {
       this.diffusion = new DIFFUSION(NOISY.hexgrid);
-      this.diffusion.init(NOISY.players, startActors);
+      this.diffusion.init(NOISY.players, this.originalActors);
       this.diffusion.diffuse(10);
    }
 
@@ -37,7 +38,7 @@ ComputerAction.prototype.update = function() {
       if (this.actors[0].getCurAP() === 0) {
          this.actors.shift();
 
-         this.diffusion.init(NOISY.players, startActors);
+         this.diffusion.init(NOISY.players, this.originalActors);
          this.diffusion.diffuse(10);
 
          continue;

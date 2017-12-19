@@ -40,7 +40,10 @@ function DIFFUSION(hexgrid_) {
       data2 = new Map(),
       sheet = data1,
       tmpSheet = data2,
-      D = 0.25,
+      // Higher values cause instability in the diffusion.
+      // We see this is at seen at 0.25.
+      // Since we are using hexagons, let's try 1/6 = 0.167
+      D = 0.167,
       goalScent = 1000,
       goals = [],                // array of cell hashes
       modulators = new Map();    // key: cell hash, value: lambda value
@@ -53,6 +56,8 @@ function DIFFUSION(hexgrid_) {
 
       goals = [];
       modulators.clear();
+
+      hexgrid.setScentMap(null);
 
       hexgrid.each(function(cell) {
          // ignore Obstacle Agents
@@ -69,7 +74,7 @@ function DIFFUSION(hexgrid_) {
       });
 
       npcs.forEach(function(npc) {
-         modulators.set(npc.getCell().getHash(), 0);
+         modulators.set(npc.getCell().getHash(), 0.1);
       });
    }
 
@@ -115,7 +120,9 @@ function DIFFUSION(hexgrid_) {
 
          // only sum the Path Agents (not Obstacles)
          for (var cell of neighbours) {
-            if (!cell.isWall()) {
+            if (cell.isWall()) {
+               nv.push(0);
+            } else {
                nv.push(sheet.get(cell.getHash()) - n0);
             }
          }
