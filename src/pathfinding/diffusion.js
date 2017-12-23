@@ -41,7 +41,7 @@ function DIFFUSION(hexgrid_) {
       sheet = data1,
       tmpSheet = data2,
       // Higher values cause instability in the diffusion.
-      // We see this is at seen at 0.25.
+      // For instance, at 0.25 scent values go to negative and swing to high positives.
       // Since we are using hexagons, let's try 1/6 = 0.167
       D = 0.167,
       goalScent = 1000,
@@ -52,7 +52,7 @@ function DIFFUSION(hexgrid_) {
    // Params
    // Object (key:cell.hash, value:scent)[] goals;   Player[]
    // Object (key:cell.hash, value:scent)[] pursuers
-   function init(players, npcs) {
+   function init(players, npcs, corpses) {
 
       goals = [];
       modulators.clear();
@@ -75,6 +75,10 @@ function DIFFUSION(hexgrid_) {
 
       npcs.forEach(function(npc) {
          modulators.set(npc.getCell().getHash(), 0.1);
+      });
+
+      corpses.forEach(function(corpse) {
+         modulators.set(corpse.getCell().getHash(), 0.5);
       });
    }
 

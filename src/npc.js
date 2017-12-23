@@ -19,3 +19,4 @@ function NPC(info) {
 NPC.prototype = Object.create(ACTOR.prototype);
 
 
+

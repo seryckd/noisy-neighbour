@@ -294,6 +294,8 @@ NOISY.endPlayerAction = function () {
 NOISY.deadActor = function(actor) {
    "use strict";
 
+   NOISY.corpses.push(actor.makeCorpse());
+
    actor.getCell().clearActor();
 
    if (actor.isPlayer()) {
@@ -301,6 +303,7 @@ NOISY.deadActor = function(actor) {
          return n !== actor;
       });
    } else {
+
       NOISY.npcs = NOISY.npcs.filter(function (n) {
          return n !== actor;
       });
@@ -420,6 +423,10 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
 
    NOISY.hexgrid.render(ctx);
 
+   NOISY.corpses.forEach(function (c) {
+      c.render(ctx, NOISY.images);
+   });
+
    NOISY.npcs.forEach(function (n) {
       n.render(ctx, NOISY.images);
    });
@@ -514,6 +521,8 @@ NOISY.loadMap = function (map) {
 
    NOISY.npcs = [];
 
+   NOISY.corpses = [];
+
    NOISY.hexgrid.init(map);
 
    map.dwarf.forEach(function (d) {
@@ -537,7 +546,9 @@ NOISY.run = function () {
 
    NOISY.images = new IMAGES();
    NOISY.images.load("player", "../images/dwarf.png");
+   NOISY.images.load("dead-player", "../images/dead-dwarf.png");
    NOISY.images.load("goblin", "../images/goblin1.png");
+   NOISY.images.load("dead-goblin", "../images/dead-goblin1.png");
 
    canvas = document.getElementById("viewport");
    canvas.width = 600;

@@ -1,5 +1,5 @@
 /* globals UTILS, NOISY */
-/* exported ACTOR, DAMAGE */
+/* exported ACTOR, DAMAGE, CORPSE */
 
 var gid = 0;
 
@@ -25,7 +25,6 @@ ACTOR.prototype.name = function() {
    "use strict";
    return 'id:' + this.id + ' loc:' + this.currentCell.getHash();
 };
-
 
 ACTOR.prototype.isPlayer = function() {
    "use strict";
@@ -105,6 +104,11 @@ ACTOR.prototype.clearAP = function() {
    this.curAP = 0;
 };
 
+ACTOR.prototype.makeCorpse = function() {
+   "use strict";
+   return new CORPSE(this.currentCell, 'dead-' + this.imageName);
+};
+
 ACTOR.prototype.update = function(/*interval*/) {
    "use strict";
 };
@@ -126,15 +130,9 @@ ACTOR.prototype.render = function(ctx, image) {
       ctx.fillText(this.id, this.centerxy.x-5, this.centerxy.y-5);
       ctx.restore();
    }
-
-   // rectangle
-   // points in rectangle
-
-//   ctx.strokeText(this.curAP,
-//                 this.centerxy.x,
-//                 this.centerxy.y);
-
 };
+
+
 
 function DAMAGE(type, damage) {
    "use strict";
@@ -146,4 +144,40 @@ function DAMAGE(type, damage) {
 DAMAGE.prototype.getDamage = function() {
    "use strict";
    return this.damage;
+};
+
+
+
+function CORPSE(cell_, imageName_) {
+   "use strict";
+
+   this.cell = cell_;
+   this.centerxy = UTILS.copyCellCenter(cell_);
+
+   this.imageName = imageName_;
+}
+
+// Return Cell
+CORPSE.prototype.getCell = function() {
+   "use strict";
+   return this.cell;
+};
+
+CORPSE.prototype.render = function(ctx, image) {
+   "use strict";
+
+   //!!! slow to draw
+   ctx.drawImage(
+      image.image(this.imageName),
+      this.centerxy.x - 35,
+      this.centerxy.y - 35
+   );
+
+   if (NOISY.isShowOverlay) {
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = "18px Serif";
+      ctx.fillText(this.id, this.centerxy.x-5, this.centerxy.y-5);
+      ctx.restore();
+   }
 };

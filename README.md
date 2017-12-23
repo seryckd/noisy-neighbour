@@ -18,6 +18,8 @@ Take a look at http://seryckd.github.io/noisy-neighbour/src/index.html
 * key press/button to switch to next player with free action points
 * moving opponents heat seeking AI
 * field of view
+* change the order that computer players move in. maybe the closest first, maybe those that will
+  fire first.
 
 ## control scheme
 
@@ -105,6 +107,7 @@ dead bodies
    - each body gives a movement penatly
    - possibly shooting penalties too
    - maybe bodies jump a cell before landing?
+   - grenades/explosions clear bodies
 
 skill tree
    - instead of classes, actors have skill trees they can spend points in

@@ -30,7 +30,7 @@ ComputerAction.prototype.update = function() {
 
    if (this.diffusion === undefined) {
       this.diffusion = new DIFFUSION(NOISY.hexgrid);
-      this.diffusion.init(NOISY.players, this.originalActors);
+      this.diffusion.init(NOISY.players, this.originalActors, NOISY.corpses);
       this.diffusion.diffuse(10);
    }
 
@@ -38,7 +38,7 @@ ComputerAction.prototype.update = function() {
       if (this.actors[0].getCurAP() === 0) {
          this.actors.shift();
 
-         this.diffusion.init(NOISY.players, this.originalActors);
+         this.diffusion.init(NOISY.players, this.originalActors, NOISY.corpses);
          this.diffusion.diffuse(10);
 
          continue;
