@@ -101,6 +101,10 @@ MoveActorAction.prototype.update = function(interval) {
       this.elapsedTime = 0;
       this.actor.decAP(1);
 
+      // ---------------
+      // Update diffusion values
+      NOISY.diffusionMap.diffuse('player', 1);
+
       if (this.path.length === 0 || this.actor.getCurAP() === 0) {
          // Done
          this.path = [];

@@ -93,6 +93,13 @@ u.center.new = u.center + diffusion.coefficent * sum.neighbours (u.neighbour - u
 
 diffusion.coefficient is [0, 0.5]
 
+Notes on Diffusion
+   Diffusion works fine through corridors and small spaces. On a large open area the scent flows around
+   agents causing odd eddies. Pursuers end up chasing dead ends,
+   
+   Seems to be a problem with corners, the scent gets larger at them.
+   
+
 ## performance improvements
 
 may have a problem with the canvas as it get s cleared and redrawn each time.

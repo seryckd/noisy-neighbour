@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,DIFFUSION*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,DIFFUSION2*/
 
 /*
  * Control Scheme
@@ -362,14 +362,15 @@ NOISY.update = function (interval) {
       NOISY.resetMap();
    }
 
-   if (NOISY.keydown.init === true) {
-      window.globalaction =  new DIFFUSION(NOISY.hexgrid);
-      window.globalaction.init(NOISY.players, NOISY.npcs);
-   }
-   if (NOISY.keydown.spread === true) {
-      window.globalaction.diffuse(1);
-      NOISY.keydown.spread = false;
-   }
+//   if (NOISY.keydown.init === true) {
+//      window.globalaction =  new DIFFUSION2(NOISY.hexgrid);
+////      window.globalaction.init(NOISY.players, NOISY.npcs);
+//      window.globalaction.init(['player']);
+//   }
+//   if (NOISY.keydown.spread === true) {
+//      window.globalaction.diffuse(1);
+//      NOISY.keydown.spread = false;
+//   }
 };
 
 // ----------------------------------------------------------------------------
@@ -525,6 +526,11 @@ NOISY.loadMap = function (map) {
 
    NOISY.hexgrid.init(map);
 
+   // new diffusion map for the level
+   // before Players and NPCs (goals) are set
+   NOISY.diffusionMap = new DIFFUSION2(NOISY.hexgrid);
+   NOISY.diffusionMap.init(['player']);
+
    map.dwarf.forEach(function (d) {
       NOISY.players.push(new PLAYER(NOISY.hexgrid.getCell(d)));
    });
@@ -532,6 +538,9 @@ NOISY.loadMap = function (map) {
    map.goblin.forEach(function (info) {
       NOISY.npcs.push(new NPC(info));
    });
+
+   // Initial diffusion
+   NOISY.diffusionMap.diffuse('player', 10);
 };
 
 NOISY.run = function () {

@@ -57,10 +57,7 @@ function HEX() {
       hexPixelWidth,    // width of hex in pixels
       hexPixelHeight,   // height of hex in pixels
       hexSize,          // length of hexagon size
-      isShowIds = false,// display the cells ids
-      scentMap = null;  // must implement
-                        // double get(cell_hash)
-
+      isShowIds = false;// display the cells ids
 
    // Hex represented in axial coords
    function Axial(q, r) {
@@ -140,6 +137,10 @@ function HEX() {
       this.isWall = function () {
          return this.wall;
       };
+
+      this.isPath = function () {
+         return !this.wall;
+      };
    }
 
 
@@ -185,7 +186,6 @@ function HEX() {
       console.log('map ' + map.width + 'x' + map.height);
 
       cells = {};
-      scentMap = null;
 
       numCols = map.width;
       numRows = map.height;
@@ -330,9 +330,11 @@ function HEX() {
          ctx.strokeStyle = 'black';
          ctx.fillStyle = cell.colour;
 
-         if (isShowIds && scentMap !== null) {
-            scent = scentMap.get(cell.getHash());
+         if (isShowIds) {
+            scent = NOISY.diffusionMap.getScent(cell, 'player');
+
             if (scent !== undefined) {
+
                // Use log to take the large scent values and put them in a smaller range
                // (-Infinity, range -10 to 10)
                scentColour = Math.log2(scent);
@@ -509,7 +511,6 @@ function HEX() {
    }
 
    function hasLineOfSight(a, b) {
-//      return true;
       return line(a, b).every(function (c) {
          return !c.isWall();
       });
@@ -549,10 +550,6 @@ function HEX() {
 
       // objects
       Cell: Cell,
-
-      setScentMap: function (map) {
-         scentMap = map;
-      }
    };
 }
 //})();

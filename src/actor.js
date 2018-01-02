@@ -18,6 +18,9 @@ function ACTOR(imageName_, startCell) {
    this.curAP = 3;
    this.turnAP = 3;
 
+   this.goal = {};
+   this.lambda = {};
+
    this.id = ++gid;
 }
 
@@ -62,14 +65,13 @@ ACTOR.prototype.applyDamage = function(damage) {
 // {x,y} position (null)
 ACTOR.prototype.setPosition = function(cell, position) {
    "use strict";
-   this.currentCell.clearActor();
-   this.currentCell = cell;
-   this.currentCell.setActor(this);
 
-   if (position) {
-      this.centerxy = position;
-   } else {
-      this.centerxy = UTILS.copyCellCenter(this.currentCell);
+   this.centerxy = position;
+
+   if (cell !== this.currentCell) {
+      this.currentCell.clearActor();
+      this.currentCell = cell;
+      this.currentCell.setActor(this);
    }
 };
 
@@ -106,7 +108,17 @@ ACTOR.prototype.clearAP = function() {
 
 ACTOR.prototype.makeCorpse = function() {
    "use strict";
-   return new CORPSE(this.currentCell, 'dead-' + this.imageName);
+   return new CORPSE(this.currentCell, 'dead-' + this.imageName, this.id);
+};
+
+ACTOR.prototype.goal = function(scent) {
+   "use strict";
+   return this.goal[scent];
+};
+
+ACTOR.prototype.lambda = function(scent) {
+   "use strict";
+   return this.lambda[scent];
 };
 
 ACTOR.prototype.update = function(/*interval*/) {
@@ -148,13 +160,14 @@ DAMAGE.prototype.getDamage = function() {
 
 
 
-function CORPSE(cell_, imageName_) {
+function CORPSE(cell_, imageName_, id_) {
    "use strict";
 
    this.cell = cell_;
    this.centerxy = UTILS.copyCellCenter(cell_);
 
    this.imageName = imageName_;
+   this.id = id_;
 }
 
 // Return Cell

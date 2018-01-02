@@ -15,7 +15,8 @@ var MAPS = {
          { "start" : '(5,1)', "strategy" : "collab" },
          { "start" : '(6,-1)', "strategy" : "collab"},
          { "start" : '(7,-3)', "strategy" : "collab"},
-         { "start" : '(8,-3)', "strategy" : "collab"}
+         { "start" : '(7,-3)', "strategy" : "collab"},
+         { "start" : '(10,-3)', "strategy" : "collab"}
       ]
    },
    "two" : {

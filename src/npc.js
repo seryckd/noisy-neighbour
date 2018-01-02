@@ -14,6 +14,8 @@ function NPC(info) {
       this.strategy = new COLLABSTRATEGY(this);
    }
 
+   // Diffusion value of scent 'player'
+   this.lambda.player = 0.1;
 }
 
 NPC.prototype = Object.create(ACTOR.prototype);

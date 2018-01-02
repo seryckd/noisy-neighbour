@@ -1,4 +1,4 @@
-/* globals NOISY, ASTAR, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS, DIFFUSION */
+/* globals NOISY, ASTAR, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS, DIFFUSION2 */
 /* exported COMPUTER, CHARGESTRATEGY, SNIPESTRATEGY */
 
 
@@ -28,18 +28,9 @@ ComputerAction.prototype.update = function() {
    var action = null,
       actor;
 
-   if (this.diffusion === undefined) {
-      this.diffusion = new DIFFUSION(NOISY.hexgrid);
-      this.diffusion.init(NOISY.players, this.originalActors, NOISY.corpses);
-      this.diffusion.diffuse(10);
-   }
-
    while (action === null && this.actors.length !== 0) {
       if (this.actors[0].getCurAP() === 0) {
          this.actors.shift();
-
-         this.diffusion.init(NOISY.players, this.originalActors, NOISY.corpses);
-         this.diffusion.diffuse(10);
 
          continue;
       }
@@ -230,7 +221,8 @@ COLLABSTRATEGY.prototype.update = function(pathfinding, nextAction) {
 
    var path = [];
 
-   path = nextAction.diffusion.hillClimb(this.actor.getCell(), 10);
+   path = NOISY.diffusionMap.hillClimb(this.actor.getCell(), 'player', 10);
+//   path = nextAction.diffusion.hillClimb(this.actor.getCell(), 'player', 10);
 
    if (path.length > 0) {
 
