@@ -1,4 +1,4 @@
-/* globals NOISY, ASTAR, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS, DIFFUSION2 */
+/* globals NOISY, ASTAR, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS */
 /* exported COMPUTER, CHARGESTRATEGY, SNIPESTRATEGY */
 
 
@@ -36,7 +36,7 @@ ComputerAction.prototype.update = function() {
       }
 
       actor = this.actors[0];
-      console.log('Comp actor:' + actor.name());
+      // console.log('Comp actor:' + actor.name());
       action = this.actorTurn(actor);
    }
 

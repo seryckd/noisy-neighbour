@@ -157,7 +157,7 @@ function DIFFUSION2(hexgrid_) {
 
    function diffuse(scent, count) {
 
-      console.log('diffuse ' + scent + ' (' + count + ')');
+      // console.log('diffuse ' + scent + ' (' + count + ')');
 
       if (count === undefined) {
          count = 1;

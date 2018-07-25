@@ -29,13 +29,20 @@
          text-align: center;
          padding: 5px 5px;
       }
+      #startButton {
+         background-color: orangered;
+         color: black;
+      }
    </style>
 </head>
 
 <body>
    <h1>Noisy Neighbours</h1>
    <div class="header-parent">
-      <button type="button" onclick="NOISY.endTurn()">End Turn</button>
+      <div>
+         <button id="turnButton" type="button" onclick="NOISY.endTurn()">End Turn</button>
+         <button id="startButton" type="button" onclick="NOISY.start()" hidden="true">Start Game</button>
+      </div>
       <div><p id="turn">hello</p></div>
 
       <div>
@@ -53,6 +60,7 @@
 
    <script type="text/javascript" src="polyfills.js"></script>
    <script type="text/javascript" src="actions.js"></script>
+   <script type="text/javascript" src="animations.js"></script>
    <script type="text/javascript" src="actor.js"></script>
    <script type="text/javascript" src="player.js"></script>
    <script type="text/javascript" src="utils.js"></script>

@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,DIFFUSION2*/
+/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION2*/
 
 /*
  * Control Scheme
@@ -16,6 +16,10 @@
  */
 
 var NOISY = NOISY || {};
+
+var GAMEMODE_PLAY = 'PLAY';
+var GAMEMODE_GAMEOVER = 'GAMEOVER';
+NOISY.gameMode = GAMEMODE_PLAY;
 
 var TURN_PLAYER = 'PLAYER';
 var TURN_COMPUTER = 'COMPUTER';
@@ -62,6 +66,9 @@ NOISY.npcs = [];
 
 // The action that is in progress (see actions.js)
 NOISY.action = null;
+
+// background animations
+NOISY.animations = [];
 
 // Map keypresses to actions
 NOISY.keymap = {
@@ -228,16 +235,38 @@ NOISY.endActionMode = function () {
    NOISY.targetCell = null;
 };
 
+NOISY.start = function() {
+   "use strict";
+
+   NOISY.animations = [];
+   document.getElementById("startButton").setAttribute("hidden", "true");
+   document.getElementById("turnButton").removeAttribute("hidden");
+   NOISY.resetMap();
+};
+
+NOISY.gameOver = function() {
+   "use strict";
+
+   NOISY.gameMode = GAMEMODE_GAMEOVER;
+   //TODO need to get these from canvas
+   NOISY.animations.push(new GameOverAction(600, 400));
+   document.getElementById("startButton").removeAttribute("hidden");
+   document.getElementById("turnButton").setAttribute("hidden", "true");
+};
+
+// Called on UI
 NOISY.endTurn = function () {
    "use strict";
 
    NOISY.turn = NOISY.turn === TURN_PLAYER ? TURN_COMPUTER : TURN_PLAYER;
 
    if (NOISY.turn === TURN_PLAYER) {
+
       NOISY.players.forEach(function (p) {
          p.newTurn();
       });
       NOISY.action = null;
+
    } else {
       // Start of computer turn, clean up any unfinished player actions
       NOISY.endActionMode();
@@ -247,7 +276,6 @@ NOISY.endTurn = function () {
 
       NOISY.action = new ComputerAction(NOISY.npcs);
    }
-
 };
 
 // Called from UI to select a different map
@@ -302,6 +330,10 @@ NOISY.deadActor = function(actor) {
       NOISY.players = NOISY.players.filter(function (n) {
          return n !== actor;
       });
+
+      if (NOISY.players.length === 0) {
+         NOISY.gameOver();
+      }
    } else {
 
       NOISY.npcs = NOISY.npcs.filter(function (n) {
@@ -342,6 +374,10 @@ NOISY.update = function (interval) {
    if (NOISY.action !== null) {
       NOISY.action = NOISY.action.update(interval);
    }
+
+   NOISY.animations = NOISY.animations.filter(function(a) {
+      return a.update(interval);
+   });
 
    // -------------------------------------------------------------------------
    //  player
@@ -490,9 +526,17 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
       NOISY.action.render(ctx);
    }
 
+   // -------------------------------------------------------------------------
+   //  animations
+
+   NOISY.animations.forEach(function(a) {
+      a.render(ctx);
+   });
+
    // reset current transformation matrix to the identity matrix
    // (clears the ctx.translate())
    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
 
    // --------------------------------------------------------------------
    // dashboard
@@ -511,6 +555,7 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
       ctx.fillText("AP:" + NOISY.userSelectedCell.getActor().getCurAP(), 150, 16);
       ctx.fillText("Health:" + NOISY.userSelectedCell.getActor().getHealth(), 200, 16);
    }
+
 };
 
 NOISY.loadMap = function (map) {

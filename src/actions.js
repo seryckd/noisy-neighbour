@@ -277,6 +277,8 @@ MeleeAction.prototype.render = function (ctx) {
 
 // ----------------------------------------------------------------------------
 // Wait Action
+//
+// Pause between computer animations
 // ----------------------------------------------------------------------------
 
 function WaitAction(time) {
@@ -301,3 +303,6 @@ WaitAction.prototype.update = function(interval) {
    }
    return this;
 };
+
+
+
