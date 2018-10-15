@@ -35,7 +35,7 @@
  *
  * (0,0) (2,-1) (4,-2)
  *    (1,0)  (3,-1)
- * (0,1) (2,0)  (3,-1)
+ * (0,1) (2,0)  (4,-1)
  *    (1,1)  (3,0)
  *
  *
@@ -52,8 +52,6 @@ function HEX() {
 
    var isFlatTop = true,
       cells = {},
-      numCols,          // Number of coloums in the grid
-      numRows,          // Number of rows in the grid
       hexPixelWidth,    // width of hex in pixels
       hexPixelHeight,   // height of hex in pixels
       hexSize,          // length of hexagon size
@@ -149,17 +147,26 @@ function HEX() {
    // Axial ax
    // Return {x, y} pixel coords
    function toPixelXY(ax) {
+      var r;
+
+//         x: this.origin.x + (h.axial().q * 3.0/2.0) * this.size.x,
+//      y: this.origin.y + (h.axial().r * Math.sqrt(3.0) + h.axial().q * Math.sqrt(3.0) / 2.0) * this.size.y
+
+
       if (isFlatTop) {
-         return {
-            x: Math.floor(hexSize * 3 / 2 * ax.q),
-            y: Math.floor(hexSize * Math.sqrt(3) * (ax.r + ax.q / 2))
+         r =  {
+//            x: Math.floor(hexSize * 3 / 2 * ax.q),
+//            y: Math.floor(hexSize * Math.sqrt(3) * (ax.r + ax.q / 2))
+            x: Math.floor(ax.q * 3.0/2.0 * hexSize),
+            y: Math.floor((ax.r * Math.sqrt(3.0) + ax.q * Math.sqrt(3.0) / 2.0) * hexSize)
          };
       } else {
-         return {
+         r =  {
             x: Math.floor(hexSize * Math.sqrt(3) * (ax.q + ax.r / 2)),
             y: Math.floor(hexSize * 3 / 2 * ax.r)
          };
       }
+      return r;
    }
 
    // Call the function 'fn' for each cell
@@ -181,14 +188,13 @@ function HEX() {
          q,
          r,
          cell,
-         halfHexSize;
+         halfHexSize,
+         l = [];
 
       console.log('map ' + map.width + 'x' + map.height);
 
       cells = {};
 
-      numCols = map.width;
-      numRows = map.height;
       hexSize = 36;
       halfHexSize = hexSize / 2;
 
@@ -203,37 +209,33 @@ function HEX() {
          hexPixelWidth = Math.sqrt(3) * hexSize;
       }
 
-      console.log('size=' + hexSize + ' width=' + hexPixelWidth + ' height=' + hexPixelHeight);
 
-      for (row = 0; row < numRows; row += 1) {
-         for (col = 0; col < numCols; col += 1) {
+      map.grid.forEach(function(e) {
+         l = e.slice(1, -1).split(',');
 
-            if (isFlatTop) {
-               r = -Math.floor(col / 2) + row;
-               q = col;
-            } else {
-               q = -Math.floor(row / 2) + col;
-               r = row;
-            }
-            cell = new Cell(q, r);
-            cell.xy = toPixelXY(cell.axial);
+         q = parseInt(l[0], 10);
+         r = parseInt(l[1], 10);
 
-            cell.centerxy = {
-               x: cell.xy.x + hexPixelWidth / 2,
-               y: cell.xy.y + hexPixelHeight / 2
-               //x: cell.xy.x + hexSize,
-               //y: cell.xy.y + hexSize
-            };
+         cell = new Cell(q, r);
+         cell.xy = toPixelXY(cell.axial);
 
-            cells[cell.getHash()] = cell;
+         cell.centerxy = {
+            x: cell.xy.x + hexPixelWidth / 2,
+            y: cell.xy.y + hexPixelHeight / 2
+            //x: cell.xy.x + hexSize,
+            //y: cell.xy.y + hexSize
+         };
 
-            if (map.walls.includes(cell.getHash())) {
-               cell.wall = true;
-               cell.colour = '#d0ffd0';
+         cells[cell.getHash()] = cell;
 
-            }
+         if (map.walls.includes(cell.getHash())) {
+            cell.wall = true;
+            cell.colour = '#d0ffd0';
+
          }
-      }
+
+      });
+
    }
 
    // Return (x,y) coords of one of the hex corners.
@@ -485,9 +487,11 @@ function HEX() {
          results = [],
          i,
          axiali,
-         cell;
+         cell,
+          cube;
 
       for (i = 0; i <= N; i += 1) {
+
          axiali = cube_to_axial(cube_round(cube_lerp(cubea, cubeb, 1.0 / N * i)));
 
          cell = getCell(axiali.hash());
@@ -501,11 +505,6 @@ function HEX() {
 
          results.push(cell);
       }
-
-//      console.log("HEX line cells=" + results.length);
-//      results.forEach(function (e) {
-//         console.log("  " + e.getHash());
-//      });
 
       return results;
    }
@@ -553,4 +552,3 @@ function HEX() {
    };
 }
 //})();
-

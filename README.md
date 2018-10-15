@@ -14,6 +14,9 @@ Take a look at http://seryckd.github.io/noisy-neighbour/src/index.html
 
 ## TODO
 
+* update hex code for code from hex-utils
+* line() is selecting cells that are not there. need to find a way to select around the gaps
+
 * when in acton mode, if click on another player then switch to that one
 * key press/button to switch to next player with free action points
 * moving opponents heat seeking AI

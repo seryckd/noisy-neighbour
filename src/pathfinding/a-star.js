@@ -197,7 +197,7 @@ function ASTAR(hexgridf) {
          processNeighbours(currentNode, hexgrid.adjacent(currentNode.cell), endNode);
       }
 
-      console.log('path: ' + outputCells(path));
+      // console.log('path: ' + outputCells(path));
 
       return path;
    }
