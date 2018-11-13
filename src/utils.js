@@ -1,3 +1,5 @@
+/* globals HexAttr */
+
 var UTILS = UTILS || {};
 
 
@@ -8,12 +10,12 @@ var UTILS = UTILS || {};
  */
 UTILS.realPosition = function position(el) {
    "use strict";
-   var pos;
+   var pos = {};
 
    // Apply offsets of all parents
-   for (pos = [0, 0]; el; el = el.offsetParent) {
-      pos[0] += el.offsetLeft - el.scrollLeft;
-      pos[1] += el.offsetTop - el.scrollTop;
+   for (pos = {x:0, y:0}; el; el = el.offsetParent) {
+      pos.x += el.offsetLeft - el.scrollLeft;
+      pos.y += el.offsetTop - el.scrollTop;
    }
    return pos;
 };
@@ -41,9 +43,11 @@ UTILS.lerp = function (a, b, t) {
 // Copy the {x,y} parameters from the given cell
 UTILS.copyCellCenter = function(cell) {
    "use strict";
+   var point = cell.getAttr(HexAttr.CENTER);
+
    return {
-      x : cell.centerxy.x,
-      y : cell.centerxy.y
+      x : point.x,
+      y : point.y
    };
 };
 

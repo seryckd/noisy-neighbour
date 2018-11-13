@@ -1,3 +1,4 @@
+/* globals HexAttr */
 /* exported ASTAR */
 
 // Implementation of A* using distance between cells as heuristic
@@ -20,7 +21,7 @@ function ASTAR(hexgridf) {
       var o = '';
 
       cells.forEach(function (c) {
-         o += c.getHash();
+         o += c.getId();
          o += ',';
       });
 
@@ -31,7 +32,7 @@ function ASTAR(hexgridf) {
 //      var o = '';
 //
 //      for (var value of nodes.values()) {
-//         o += value.getHash();
+//         o += value.getId();
 //         o += ',';
 //      }
 //
@@ -51,11 +52,11 @@ function ASTAR(hexgridf) {
       };
 
       this.isWalkable = function () {
-         return !this.cell.isWall() && !this.cell.hasActor();
+         return !this.cell.getAttr(HexAttr.WALL) && !this.cell.getAttr(HexAttr.ACTOR);
       };
 
-      this.getHash = function () {
-         return this.cell.getHash();
+      this.getId = function () {
+         return this.cell.getId();
       };
    }
 
@@ -78,7 +79,7 @@ function ASTAR(hexgridf) {
       }
 
       if (node !== null) {
-         openMap.delete(node.getHash());
+         openMap.delete(node.getId());
       }
 
       return node;
@@ -86,14 +87,14 @@ function ASTAR(hexgridf) {
 
    function to_node(cell) {
 
-      var node = mapCellToNodes[cell.getHash()];
+      var node = mapCellToNodes[cell.getId()];
 
       if (node !== undefined) {
          return node;
       }
 
       node = new Node(cell);
-      mapCellToNodes[cell.getHash()] = node;
+      mapCellToNodes[cell.getId()] = node;
       return node;
    }
 
@@ -111,16 +112,16 @@ function ASTAR(hexgridf) {
          node = to_node(neighbour);
 
          if (node !== targetNode) {
-            if (!node.isWalkable() || closeMap.has(node.getHash())) {
+            if (!node.isWalkable() || closeMap.has(node.getId())) {
                // Node that should not be considered
                return;
             }
          }
 
-         if (!openMap.has(node.getHash())) {
+         if (!openMap.has(node.getId())) {
 
             // found new node
-            openMap.set(node.getHash(), node);
+            openMap.set(node.getId(), node);
             node.parent = currentNode;
 
             node.G = node.parent.G + 1;
@@ -178,7 +179,7 @@ function ASTAR(hexgridf) {
          endNode = to_node(endCell),
          path = [];
 
-      openMap.set(startCell.getHash(), to_node(startCell));
+      openMap.set(startCell.getId(), to_node(startCell));
 
       while (openMap.size > 0) {
 
@@ -192,9 +193,9 @@ function ASTAR(hexgridf) {
             break;
          }
 
-         closeMap.set(currentNode.getHash(), currentNode);
+         closeMap.set(currentNode.getId(), currentNode);
 
-         processNeighbours(currentNode, hexgrid.adjacent(currentNode.cell), endNode);
+         processNeighbours(currentNode, hexgrid.getAdjacent(currentNode.cell), endNode);
       }
 
       // console.log('path: ' + outputCells(path));
@@ -220,18 +221,18 @@ function ASTAR(hexgridf) {
           index;
 
       frontier.push(node);
-      //reachable.set(node.getHash(), node.cell);
+      //reachable.set(node.getId(), node.cell);
 
       while (frontier.length !== 0) {
          node = frontier.shift();
 
-         neighbours = hexgrid.adjacent(node.cell);
+         neighbours = hexgrid.getAdjacent(node.cell);
          for (index=0; index<neighbours.length; ++index) {
             next = to_node(neighbours[index]);
 
-            if (reachable.has(next.getHash()) ||
+            if (reachable.has(next.getId()) ||
                 !next.isWalkable() ||
-                next.getHash() === startCell.getHash()) {
+                next.getId() === startCell.getId()) {
                continue;
             }
 
@@ -242,7 +243,7 @@ function ASTAR(hexgridf) {
 
             if (next.G <= movePoints) {
                frontier.push(next);
-               reachable.set(next.getHash(), next.cell);
+               reachable.set(next.getId(), next.cell);
             }
          }
       }

@@ -1,4 +1,4 @@
-/* globals UTILS, NOISY */
+/* globals UTILS, NOISY, HexAttr */
 /* exported ACTION, MoveActorAction, MissileAction, MeleeAction */
 
 // ACTION is meant to be called on the main input loop. They are primarily
@@ -67,6 +67,8 @@ ACTION.prototype.render = function(/*ctx*/) {
 function MoveActorAction(actor, path) {
    "use strict";
 
+   console.log('MoveActor ' + path);
+
    this.actor = actor;
    this.path = path;
 
@@ -115,13 +117,13 @@ MoveActorAction.prototype.update = function(interval) {
 
       // Move actor from current cell to the next one
       this.centerxy.x = UTILS.lerp(
-         this.cell.centerxy.x,
-         this.path[0].centerxy.x,
+         this.cell.getAttr(HexAttr.CENTER).x,
+         this.path[0].getAttr(HexAttr.CENTER).x,
          this.elapsedTime / speed);
 
       this.centerxy.y = UTILS.lerp(
-         this.cell.centerxy.y,
-         this.path[0].centerxy.y,
+         this.cell.getAttr(HexAttr.CENTER).y,
+         this.path[0].getAttr(HexAttr.CENTER).y,
          this.elapsedTime / speed);
 
       this.actor.setPosition(this.cell, this.centerxy);

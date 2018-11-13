@@ -1,4 +1,4 @@
-/* globals UTILS, NOISY */
+/* globals UTILS, NOISY, HexAttr */
 /* exported ACTOR, DAMAGE, CORPSE */
 
 var gid = 0;
@@ -7,7 +7,7 @@ function ACTOR(imageName_, startCell) {
    "use strict";
 
    this.currentCell = startCell;
-   this.currentCell.setActor(this);
+   this.currentCell.setAttr(HexAttr.ACTOR, this);
    this.centerxy = UTILS.copyCellCenter(startCell);
 
    this.imageName = imageName_;
@@ -26,7 +26,7 @@ function ACTOR(imageName_, startCell) {
 
 ACTOR.prototype.name = function() {
    "use strict";
-   return 'id:' + this.id + ' loc:' + this.currentCell.getHash();
+   return 'id:' + this.id + ' loc:' + this.currentCell.getId();
 };
 
 ACTOR.prototype.isPlayer = function() {
@@ -69,9 +69,9 @@ ACTOR.prototype.setPosition = function(cell, position) {
    this.centerxy = position;
 
    if (cell !== this.currentCell) {
-      this.currentCell.clearActor();
+      this.currentCell.clearAttr(HexAttr.ACTOR);
       this.currentCell = cell;
-      this.currentCell.setActor(this);
+      this.currentCell.setAttr(HexAttr.ACTOR, this);
    }
 };
 

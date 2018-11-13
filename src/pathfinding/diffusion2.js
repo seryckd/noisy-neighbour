@@ -1,3 +1,4 @@
+/* globals HexAttr */
 /* exported DIFFUSION2 */
 
 /*
@@ -62,11 +63,9 @@ function DIFFUSION2(hexgrid_) {
 
    function init(scents) {
 
-      hexgrid.each(function(cell) {
-         if (cell.isPath()) {
-            currentSheet.set(cell.getHash(), newValues(scents));
-            workSheet.set(cell.getHash(), newValues(scents));
-         }
+      hexgrid.filter(HexAttr.PATH, function(h) {
+         currentSheet.set(h.getId(), newValues(scents));
+         workSheet.set(h.getId(), newValues(scents));
       });
    }
 
@@ -99,15 +98,15 @@ function DIFFUSION2(hexgrid_) {
 
       for (var [key, value] of currentSheet) {
 
-         cell = hexgrid.getCell(key);
+         cell = hexgrid.getHex(key);
 
-         if (!cell.isPath()) {
+         if (!cell.getAttr(HexAttr.PATH)) {
             continue;
          }
 
-         actor = cell.getActor();
+         actor = cell.getAttr(HexAttr.ACTOR);
 
-         if (actor !== null && actor.goal[scent] !== undefined) {
+         if (actor !== undefined && actor.goal[scent] !== undefined) {
             // Goal scent is always populated
             workSheet.get(key)[scent] = actor.goal[scent];
             continue;
@@ -117,11 +116,11 @@ function DIFFUSION2(hexgrid_) {
          nsum = 0;
          nv.length = 0;
 
-         neighbours = hexgrid.adjacent(cell);
+         neighbours = hexgrid.getAdjacent(cell);
 
          // only sum the Path Agents (not Obstacles)
          for (var neighbour of neighbours) {
-            if (neighbour.isPath()) {
+            if (neighbour.getAttr(HexAttr.PATH)) {
                nv.push(getScent(neighbour, scent) - n0);
             } else {
                nv.push(0 - n0);
@@ -132,7 +131,7 @@ function DIFFUSION2(hexgrid_) {
 
          dv = n0 + D * nsum;
 
-         if (actor !== null) {
+         if (actor !== undefined) {
             lambda = actor.lambda[scent];
             if (lambda !== undefined) {
                dv = dv * lambda;
@@ -169,7 +168,7 @@ function DIFFUSION2(hexgrid_) {
    }
 
    function getScent(cell, scent) {
-      var values = currentSheet.get(cell.getHash());
+      var values = currentSheet.get(cell.getId());
 
       if (values !== undefined) {
          return values[scent];
@@ -184,19 +183,19 @@ function DIFFUSION2(hexgrid_) {
    function findHill(cell, scent) {
       var value,
          max = getScent(cell, scent),
-         hash;
+         id;
 
-      hexgrid.adjacent(cell).forEach(function(neighbour) {
+      hexgrid.getAdjacent(cell).forEach(function(neighbour) {
 
          value = getScent(neighbour, scent);
 
          if (value > max) {
             max = value;
-            hash = neighbour.getHash();
+            id = neighbour.getId();
          }
       });
 
-      return hexgrid.getCell(hash);
+      return hexgrid.getHex(id);
    }
 
    // Parameters
@@ -218,7 +217,7 @@ function DIFFUSION2(hexgrid_) {
    }
 
    function setGoalAgent(actor) {
-      var key = actor.getCell().getHash();
+      var key = actor.getCell().getId();
 
       Object.getOwnPropertyNames(actor.goal).forEach(function(scent) {
          currentSheet.get(key)[scent] = actor.goal[scent];

@@ -4,7 +4,7 @@
 function NPC(info) {
    "use strict";
 
-   ACTOR.call(this, "goblin", NOISY.hexgrid.getCell(info.start));
+   ACTOR.call(this, "goblin", NOISY.hexgrid.getHex(info.start));
 
    if (info.strategy === "charge") {
       this.strategy = new CHARGESTRATEGY(this);

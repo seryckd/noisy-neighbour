@@ -1,4 +1,4 @@
-/*globals IMAGES,HEX,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION2*/
+/*globals IMAGES,HEXGRID,HexAttr,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION2*/
 
 /*
  * Control Scheme
@@ -105,10 +105,10 @@ NOISY.coordsToCell = function (canvas, e) {
    // e.screenX, e.screenY in global (screen) coords
 
    var canvasOffset = UTILS.realPosition(canvas),
-      x = e.clientX - canvasOffset[0] - NOISY.viewport.x,
-      y = e.clientY - canvasOffset[1] - NOISY.viewport.y;
+      x = e.clientX - canvasOffset.x - NOISY.viewport.x,
+      y = e.clientY - canvasOffset.y - NOISY.viewport.y;
 
-   return NOISY.hexgrid.selectHex(x, y);
+   return NOISY.hexgrid.selectHex({x:x, y:y});
 };
 
 // New Move Input from User (e.g. mouse)
@@ -125,17 +125,17 @@ NOISY.handleMoveInput = function (cell, skipCheck) {
    }
 
    if (cell !== null) {
-      NOISY.userSelectedCell = cell.isWall() ? null : cell;
+
+      NOISY.userSelectedCell = cell.getAttr(HexAttr.WALL) === true ? null : cell;
 
       if (NOISY.mode === MODE_ACTION) {
 
-         if (!cell.hasActor() &&
-             !cell.isWall() &&
-             NOISY.selPlayerView.reachableCells.has(cell.getHash())) {
+         if (cell.getAttr(HexAttr.ACTOR) === undefined &&
+             cell.getAttr(HexAttr.WALL) !== true &&
+             NOISY.selPlayerView.reachableCells.has(cell.getId())) {
 
             NOISY.selPlayerView.pathCells = new ASTAR(NOISY.hexgrid)
                .findPath(NOISY.selPlayer.getCell(), cell);
-
          } else {
             NOISY.selPlayerView.pathCells = [];
          }
@@ -188,7 +188,7 @@ NOISY.handleClickInput = function (cell) {
    if (NOISY.mode === MODE_SELECT) {
 
       if (NOISY.selectableActorCell !== null) {
-         NOISY.selPlayer = NOISY.selectableActorCell.getActor();
+         NOISY.selPlayer = NOISY.selectableActorCell.getAttr(HexAttr.ACTOR);
          NOISY.mode = MODE_ACTION;
          NOISY.selPlayerView = NOISY.calculateActorView(NOISY.selPlayer);
       }
@@ -201,13 +201,13 @@ NOISY.handleClickInput = function (cell) {
       })) {
 
          if (NOISY.hexgrid.areNeighbours(cell, NOISY.selPlayer.getCell())) {
-            NOISY.action = new MeleeAction(NOISY.selPlayer, cell.getActor())
+            NOISY.action = new MeleeAction(NOISY.selPlayer, cell.getAttr(HexAttr.ACTOR))
                .setCallback(NOISY.endPlayerAction);
          } else {
-            NOISY.action = new MissileAction(NOISY.selPlayer, cell.getActor())
+            NOISY.action = new MissileAction(NOISY.selPlayer, cell.getAttr(HexAttr.ACTOR))
                .setCallback(NOISY.endPlayerAction);
          }
-      } else if (NOISY.selPlayerView.reachableCells.has(cell.getHash())) {
+      } else if (NOISY.selPlayerView.reachableCells.has(cell.getId())) {
 
          NOISY.action = new MoveActorAction(
             NOISY.selPlayer, NOISY.selPlayerView.pathCells)
@@ -324,7 +324,7 @@ NOISY.deadActor = function(actor) {
 
    NOISY.corpses.push(actor.makeCorpse());
 
-   actor.getCell().clearActor();
+   actor.getCell().clearAttr(HexAttr.ACTOR);
 
    if (actor.isPlayer()) {
       NOISY.players = NOISY.players.filter(function (n) {
@@ -415,7 +415,7 @@ NOISY.update = function (interval) {
 function renderTarget (ctx, targetableCells, userSelectedCell) {
    "use strict";
 
-   var targettedCell;
+   var targettedCell, point;
    ctx.save();
 
    targetableCells.forEach(function (c) {
@@ -425,16 +425,18 @@ function renderTarget (ctx, targetableCells, userSelectedCell) {
       ctx.lineWidth = targettedCell ? 3 : 2;
       ctx.strokeStyle = targettedCell ? '#f00000' : '#b00000';
 
+      point = c.getAttr(HexAttr.CENTER);
+
       ctx.beginPath();
-      ctx.arc(c.centerxy.x, c.centerxy.y, 18, 0, 2 * Math.PI);
-      ctx.moveTo(c.centerxy.x - 23, c.centerxy.y);
-      ctx.lineTo(c.centerxy.x - 13, c.centerxy.y);
-      ctx.moveTo(c.centerxy.x + 23, c.centerxy.y);
-      ctx.lineTo(c.centerxy.x + 13, c.centerxy.y);
-      ctx.moveTo(c.centerxy.x, c.centerxy.y - 23);
-      ctx.lineTo(c.centerxy.x, c.centerxy.y - 13);
-      ctx.moveTo(c.centerxy.x, c.centerxy.y + 23);
-      ctx.lineTo(c.centerxy.x, c.centerxy.y + 13);
+      ctx.arc(point.x, point.y, 18, 0, 2 * Math.PI);
+      ctx.moveTo(point.x - 23, point.y);
+      ctx.lineTo(point.x - 13, point.y);
+      ctx.moveTo(point.x + 23, point.y);
+      ctx.lineTo(point.x + 13, point.y);
+      ctx.moveTo(point.x, point.y - 23);
+      ctx.lineTo(point.x, point.y - 13);
+      ctx.moveTo(point.x, point.y + 23);
+      ctx.lineTo(point.x, point.y + 13);
       ctx.stroke();
    });
 
@@ -472,40 +474,40 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
 
       // mouse over cell
       if (NOISY.userSelectedCell !== null) {
-         NOISY.hexgrid.drawHexPath(ctx, NOISY.userSelectedCell, 36);
-
-         ctx.strokeStyle = NOISY.userSelectedCell === NOISY.selectableActorCell ? selectableColour : mouseOverColour;
-         ctx.stroke();
+         // old - 36
+         NOISY.hexgrid.highlightHex(
+            ctx,
+            NOISY.userSelectedCell,
+            NOISY.userSelectedCell === NOISY.selectableActorCell ? selectableColour : mouseOverColour);
       }
 
    } else { //MODE_ACTION
 
       // selected player stays selected in Action Mode
-      NOISY.hexgrid.drawHexPath(ctx, NOISY.selPlayer.getCell(), 36);
-      ctx.strokeStyle = selectableColour;
-      ctx.stroke();
+      // old - 36
+      NOISY.hexgrid.highlightHex(
+         ctx,
+         NOISY.selPlayer.getCell(),
+         selectableColour);
 
       if (NOISY.userSelectedCell !== null && NOISY.userSelectedCell !== NOISY.selPlayer.getCell()) {
-         NOISY.hexgrid.drawHexPath(ctx, NOISY.userSelectedCell, 36);
-         ctx.strokeStyle = mouseOverColour;
-         ctx.stroke();
+         // old - 36
+         NOISY.hexgrid.highlightHex(
+            ctx,
+            NOISY.userSelectedCell,
+            mouseOverColour);
       }
 
       if (NOISY.selPlayerView !== null) {
 
          // Reachable Cells
-         ctx.strokeStyle = '#ffffff';
-         ctx.lineWidth = 2;
          NOISY.selPlayerView.reachableCells.forEach(function (c) {
-            NOISY.hexgrid.drawHexPath(ctx, c, 28);
-            ctx.stroke();
+            NOISY.hexgrid.highlightHex(ctx, c,'#ffffff', 28, 2);
          });
 
          // Currently selected path in the reachable Cells
-         ctx.fillStyle = '#ffffff';
          NOISY.selPlayerView.pathCells.forEach(function (c) {
-            NOISY.hexgrid.drawHexPath(ctx, c, 10);
-            ctx.fill();
+            NOISY.hexgrid.highlightHex(ctx, c, '#ffffff', 10);
          });
 
          // Targetable cells
@@ -551,9 +553,9 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
    ctx.font = "18px Serif";
    ctx.fillText("Mode:" + (NOISY.mode === MODE_ACTION ? "ACTION" : "SELECT"), 10, 16);
 
-   if (NOISY.userSelectedCell !== null && NOISY.userSelectedCell.hasActor()) {
-      ctx.fillText("AP:" + NOISY.userSelectedCell.getActor().getCurAP(), 150, 16);
-      ctx.fillText("Health:" + NOISY.userSelectedCell.getActor().getHealth(), 200, 16);
+   if (NOISY.userSelectedCell !== null && NOISY.userSelectedCell.getAttr(HexAttr.ACTOR)) {
+      ctx.fillText("AP:" + NOISY.userSelectedCell.getAttr(HexAttr.ACTOR).getCurAP(), 150, 16);
+      ctx.fillText("Health:" + NOISY.userSelectedCell.getAttr(HexAttr.ACTOR).getHealth(), 200, 16);
    }
 
 };
@@ -569,7 +571,9 @@ NOISY.loadMap = function (map) {
 
    NOISY.corpses = [];
 
-   NOISY.hexgrid.init(map);
+   NOISY.hexgrid.init(
+      { x:0, y:0 },
+      map);
 
    // new diffusion map for the level
    // before Players and NPCs (goals) are set
@@ -577,7 +581,7 @@ NOISY.loadMap = function (map) {
    NOISY.diffusionMap.init(['player']);
 
    map.dwarf.forEach(function (d) {
-      NOISY.players.push(new PLAYER(NOISY.hexgrid.getCell(d)));
+      NOISY.players.push(new PLAYER(NOISY.hexgrid.getHex(d)));
    });
 
    map.goblin.forEach(function (info) {
@@ -614,7 +618,7 @@ NOISY.run = function () {
    dashboard.width = 600;
    dashboard.height = 20;
 
-   NOISY.hexgrid = new HEX();
+   NOISY.hexgrid = new HEXGRID();
 
    NOISY.loadMap(MAPS.one);
 

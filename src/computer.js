@@ -1,4 +1,4 @@
-/* globals NOISY, ASTAR, ACTION, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS */
+/* globals NOISY, ASTAR, ACTION, HexAttr, MoveActorAction, MeleeAction, MissileAction, WaitAction, UTILS */
 /* exported COMPUTER, CHARGESTRATEGY, SNIPESTRATEGY */
 
 
@@ -226,11 +226,11 @@ COLLABSTRATEGY.prototype.update = function(pathfinding, nextAction) {
 
    if (path.length > 0) {
 
-      if (!path[0].hasActor()) {
+      if (path[0].getAttr(HexAttr.ACTOR) === undefined) {
          return new MoveActorAction(this.actor, path.slice(0, 1))
                .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
-      } else if (path[0].getActor().isPlayer()) {
-         return new MeleeAction(this.actor, path[0].getActor())
+      } else if (path[0].getAttr(HexAttr.ACTOR).isPlayer()) {
+         return new MeleeAction(this.actor, path[0].getAttr(HexAttr.ACTOR))
             .setNextAction(new WaitAction(0.2).setNextAction(nextAction));
       }
    }
