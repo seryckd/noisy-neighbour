@@ -1,4 +1,4 @@
-/*globals ACTOR, DIFFUSION2*/
+/*globals NOISY,ACTOR, DIFFUSION3*/
 /* exported PLAYER */
 
 function PLAYER(startCell) {
@@ -8,7 +8,7 @@ function PLAYER(startCell) {
 
    this.isPlayer_ = true;
 
-   this.goal.player = DIFFUSION2.GOAL_SCENT;
+   this.goal.player = DIFFUSION3.GOAL_SCENT;
    NOISY.diffusionMap.setGoalAgent(this);
 }
 

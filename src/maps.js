@@ -6,7 +6,7 @@ var MAPS = {
       "walls" : [
          '(2,0)'
       ],
-      "dwarf" : ['(1,0)', '(3,3)'],
+      "dwarf" : ['(3,3)'],
       "goblin" : [
          { "start" : '(3,0)', "strategy" : "collab" }
       ],

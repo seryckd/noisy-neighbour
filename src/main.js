@@ -1,4 +1,4 @@
-/*globals IMAGES,HEXGRID,HexAttr,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION2*/
+/*globals IMAGES,HEXGRID,HexAttr,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION3*/
 
 /*
  * Control Scheme
@@ -340,6 +340,8 @@ NOISY.deadActor = function(actor) {
          return n !== actor;
       });
    }
+
+   NOISY.diffusionMap.diffuse('player');
 };
 
 NOISY.update = function (interval) {
@@ -398,15 +400,11 @@ NOISY.update = function (interval) {
       NOISY.resetMap();
    }
 
-//   if (NOISY.keydown.init === true) {
-//      window.globalaction =  new DIFFUSION2(NOISY.hexgrid);
-////      window.globalaction.init(NOISY.players, NOISY.npcs);
-//      window.globalaction.init(['player']);
-//   }
-//   if (NOISY.keydown.spread === true) {
-//      window.globalaction.diffuse(1);
-//      NOISY.keydown.spread = false;
-//   }
+   if (NOISY.keydown.spread === true) {
+      NOISY.diffusionMap.diffuse('player');
+      NOISY.keydown.spread = false;
+   }
+
 };
 
 // ----------------------------------------------------------------------------
@@ -502,12 +500,12 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
 
          // Reachable Cells
          NOISY.selPlayerView.reachableCells.forEach(function (c) {
-            NOISY.hexgrid.highlightHex(ctx, c,'#ffffff', 28, 2);
+            NOISY.hexgrid.highlightHex(ctx, c, '#ffffff', 28, 2);
          });
 
          // Currently selected path in the reachable Cells
          NOISY.selPlayerView.pathCells.forEach(function (c) {
-            NOISY.hexgrid.highlightHex(ctx, c, '#ffffff', 10);
+            NOISY.hexgrid.drawHex(ctx, c, '#ffffff', 10);
          });
 
          // Targetable cells
@@ -563,6 +561,8 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
 NOISY.loadMap = function (map) {
    "use strict";
 
+   NOISY.endActionMode();
+
    NOISY.currentMap = map;
 
    NOISY.players = [];
@@ -577,7 +577,7 @@ NOISY.loadMap = function (map) {
 
    // new diffusion map for the level
    // before Players and NPCs (goals) are set
-   NOISY.diffusionMap = new DIFFUSION2(NOISY.hexgrid);
+   NOISY.diffusionMap = new DIFFUSION3(NOISY.hexgrid);
    NOISY.diffusionMap.init(['player']);
 
    map.dwarf.forEach(function (d) {
@@ -589,7 +589,7 @@ NOISY.loadMap = function (map) {
    });
 
    // Initial diffusion
-   NOISY.diffusionMap.diffuse('player', 10);
+   NOISY.diffusionMap.diffuse('player');
 };
 
 NOISY.run = function () {

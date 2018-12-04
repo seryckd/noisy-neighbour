@@ -14,9 +14,9 @@ Take a look at http://seryckd.github.io/noisy-neighbour/src/index.html
 
 ## TODO
 
-* update hex code for code from hex-utils
 * line() is selecting cells that are not there. need to find a way to select around the gaps
-
+* can target enemies outside of LoS
+*
 * when in acton mode, if click on another player then switch to that one
 * key press/button to switch to next player with free action points
 * moving opponents heat seeking AI
@@ -64,6 +64,12 @@ click on something not highlighted
    remove all highlights
    deselect unit
 
+'n' - show diffusion colour and cell ids
+
+'c' - cause a diffusion (no longer useful but left in)
+
+'w', 'a', 's', 'd' - scroll viewport
+
 ## line of sight/field of view
 current
 - loop through all possible targets checking to see if they are in range
@@ -73,15 +79,15 @@ need proper field of view
 ## collaborative diffusion
 
 [[Paper][http://www.cs.colorado.edu/~ralex/papers/PDF/OOPSLA06antiobjects.pdf]]
-WIP
+
 Goal Agents - every player
 Pursuer Agents - computer players
 Path Environment Agents - hexes with no obstacles
 Obstacle Environment Agents - hexes with walls
 
-At the beginning of the computer turn, calculate the diffusion map for each path environment agent.
-Each iteration will diffuse the scent of the players 1 path. To enable the computer to see players
-5 hexes away run the iteration 5 times.
+Every time an actor (player or computer) moves or dies recalculate the diffusion map.
+The diffusion occurs until the scent stabilizes. This probably has the same effect as
+starting from a fresh scent every turn.  Need to look at that eventually.
 
 should Pursuer Agents diffuse the scent
    none - each agent will block the path of another one. great if there is another path to the goal,
@@ -89,19 +95,6 @@ should Pursuer Agents diffuse the scent
    some - each agent will let some of the scent pass. this should result in another path being
           more deserible, but if no other path is available then agents will follow same path
    all -  each agent will have no affect on the diffusion. agents will all follow the same path
-
-diffusion equation
-
-u.center.new = u.center + diffusion.coefficent * sum.neighbours (u.neighbour - u.center)
-
-diffusion.coefficient is [0, 0.5]
-
-Notes on Diffusion
-   Diffusion works fine through corridors and small spaces. On a large open area the scent flows around
-   agents causing odd eddies. Pursuers end up chasing dead ends,
-   
-   Seems to be a problem with corners, the scent gets larger at them.
-   
 
 ## performance improvements
 

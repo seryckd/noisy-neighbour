@@ -105,7 +105,7 @@ MoveActorAction.prototype.update = function(interval) {
 
       // ---------------
       // Update diffusion values
-      NOISY.diffusionMap.diffuse('player', 1);
+      NOISY.diffusionMap.diffuse('player');
 
       if (this.path.length === 0 || this.actor.getCurAP() === 0) {
          // Done
