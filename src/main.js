@@ -87,6 +87,9 @@ NOISY.keydown = {};
 // true for show overlays, such as tile ids
 NOISY.isShowOverlay = false;
 
+// Controls whether canvas grid is redrawn
+NOISY.isRedrawGrid = true;
+
 //
 // Return: boolean true for user input is allowed
 NOISY.userInputAllowed = function() {
@@ -353,16 +356,20 @@ NOISY.update = function (interval) {
 
    if (NOISY.keydown.up === true) {
       NOISY.viewport.y += velocity;
+      NOISY.isRedrawGrid = true;
 
    } else if (NOISY.keydown.down === true) {
       NOISY.viewport.y -= velocity;
+      NOISY.isRedrawGrid = true;
    }
 
    if (NOISY.keydown.left === true) {
       NOISY.viewport.x += velocity;
+      NOISY.isRedrawGrid = true;
 
    } else if (NOISY.keydown.right === true) {
       NOISY.viewport.x -= velocity;
+      NOISY.isRedrawGrid = true;
    }
 
    // update whose turn it iss
@@ -441,7 +448,42 @@ function renderTarget (ctx, targetableCells, userSelectedCell) {
    ctx.restore();
 }
 
-NOISY.render = function (canvas, dashboard /*, interval*/) {
+NOISY.renderDashboard = function (canvas /*, interval*/) {
+   "use strict";
+   var ctx = canvas.getContext("2d");
+
+   ctx.clearRect(0, 0, canvas.width, canvas.height);
+   ctx.fillStyle = '#7fcabb';
+   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+   ctx.fillStyle = '#000000';
+   ctx.font = "18px Serif";
+   ctx.fillText("Mode:" + (NOISY.mode === MODE_ACTION ? "ACTION" : "SELECT"), 10, 16);
+
+   if (NOISY.userSelectedCell !== null && NOISY.userSelectedCell.getAttr(HexAttr.ACTOR)) {
+      ctx.fillText("AP:" + NOISY.userSelectedCell.getAttr(HexAttr.ACTOR).getCurAP(), 150, 16);
+      ctx.fillText("Health:" + NOISY.userSelectedCell.getAttr(HexAttr.ACTOR).getHealth(), 200, 16);
+   }
+};
+
+NOISY.renderBackground = function (canvas2 /*, interval*/) {
+   "use strict";
+   var ctx2 = canvas2.getContext("2d");
+
+   // Set with a clean slate
+   ctx2.fillStyle = '#555555';
+   ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+
+   // set viewport to current position
+   ctx2.translate(NOISY.viewport.x, NOISY.viewport.y);
+
+   NOISY.hexgrid.render(ctx2);
+
+   ctx2.setTransform(1, 0, 0, 1, 0, 0);
+
+};
+
+NOISY.renderMain = function (canvas /*, interval*/) {
    "use strict";
 
    var ctx,
@@ -452,13 +494,10 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
    ctx = canvas.getContext("2d");
 
    // Set with a clean slate
-   ctx.fillStyle = '#555555';
-   ctx.fillRect(0, 0, canvas.width, canvas.height);
+   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
    // set viewport to current position
    ctx.translate(NOISY.viewport.x, NOISY.viewport.y);
-
-   NOISY.hexgrid.render(ctx);
 
    NOISY.corpses.forEach(function (c) {
       c.render(ctx, NOISY.images);
@@ -533,29 +572,7 @@ NOISY.render = function (canvas, dashboard /*, interval*/) {
       a.render(ctx);
    });
 
-   // reset current transformation matrix to the identity matrix
-   // (clears the ctx.translate())
    ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-
-   // --------------------------------------------------------------------
-   // dashboard
-
-   ctx = dashboard.getContext("2d");
-
-   ctx.clearRect(0, 0, dashboard.width, dashboard.height);
-   ctx.fillStyle = '#7fcabb';
-   ctx.fillRect(0, 0, dashboard.width, dashboard.height);
-
-   ctx.fillStyle = '#000000';
-   ctx.font = "18px Serif";
-   ctx.fillText("Mode:" + (NOISY.mode === MODE_ACTION ? "ACTION" : "SELECT"), 10, 16);
-
-   if (NOISY.userSelectedCell !== null && NOISY.userSelectedCell.getAttr(HexAttr.ACTOR)) {
-      ctx.fillText("AP:" + NOISY.userSelectedCell.getAttr(HexAttr.ACTOR).getCurAP(), 150, 16);
-      ctx.fillText("Health:" + NOISY.userSelectedCell.getAttr(HexAttr.ACTOR).getHealth(), 200, 16);
-   }
-
 };
 
 NOISY.loadMap = function (map) {
@@ -599,8 +616,10 @@ NOISY.run = function () {
       dt = 0,
       last = window.performance.now(),
       step = 1 / 60,
-      canvas,
-      dashboard;
+      canvasDiv,
+      canvasBackground,
+      canvasMain,
+      canvasDashboard;
 
    NOISY.images = new IMAGES();
    NOISY.images.load("player", "../images/dwarf.png");
@@ -608,15 +627,21 @@ NOISY.run = function () {
    NOISY.images.load("goblin", "../images/goblin1.png");
    NOISY.images.load("dead-goblin", "../images/dead-goblin1.png");
 
-   canvas = document.getElementById("viewport");
-   canvas.width = 600;
-   canvas.height = 400;
+   canvasDiv = document.getElementById("canvas-div");
+   canvasBackground = document.getElementById("canvas-background");
+   canvasMain = document.getElementById("canvas-main");
+
+   canvasDiv.width = 600;
+   canvasDiv.height = 400;
+
+   canvasMain.width = canvasBackground.width = canvasDiv.width;
+   canvasMain.height = canvasBackground.height = canvasDiv.height;
+
+   canvasDashboard = document.getElementById("canvas-dashboard");
+   canvasDashboard.width = 600;
+   canvasDashboard.height = 20;
 
    NOISY.turnElement = document.getElementById("turn");
-
-   dashboard = document.getElementById("dashboard");
-   dashboard.width = 600;
-   dashboard.height = 20;
 
    NOISY.hexgrid = new HEXGRID();
 
@@ -624,12 +649,12 @@ NOISY.run = function () {
 
    // Track the mouse
    // Only call after setup globals
-   canvas.addEventListener("mousemove", function (e) {
-      NOISY.handleMoveInput(NOISY.coordsToCell(canvas, e));
+   canvasMain.addEventListener("mousemove", function (e) {
+      NOISY.handleMoveInput(NOISY.coordsToCell(canvasMain, e));
    });
 
    // Track clicks
-   canvas.addEventListener("click", function (/* e */) {
+   canvasMain.addEventListener("click", function (/* e */) {
       // assume click comes on the same cell mouse was over
       NOISY.handleClickInput(NOISY.userSelectedCell);
    });
@@ -677,7 +702,15 @@ NOISY.run = function () {
 
       // pass remainder into render for smoothing (interpolation)
       // (at this point dt < step)
-      NOISY.render(canvas, dashboard, dt);
+
+      if (NOISY.isRedrawGrid) {
+         NOISY.renderBackground(canvasBackground, dt);
+         NOISY.isRedrawGrid = false;
+      }
+
+      NOISY.renderMain(canvasMain, dt);
+
+      NOISY.renderDashboard(canvasDashboard, dt);
 
       last = now;
 

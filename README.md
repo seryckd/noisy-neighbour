@@ -16,11 +16,15 @@ Take a look at http://seryckd.github.io/noisy-neighbour/src/index.html
 
 * line() is selecting cells that are not there. need to find a way to select around the gaps
 * can target enemies outside of LoS
+* implement different strategies.
+*   snipe - prefer to shoot. will move to close to shooting range, but move away if too close
+*   swarm - weak range weapons, will usually choose to charge and go to combat
+*   
 *
 * when in acton mode, if click on another player then switch to that one
 * key press/button to switch to next player with free action points
 * moving opponents heat seeking AI
-* field of view
+* field of view (fog of war)
 * change the order that computer players move in. maybe the closest first, maybe those that will
   fire first.
 
