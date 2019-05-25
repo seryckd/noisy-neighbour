@@ -1,4 +1,5 @@
-/*globals IMAGES,HEXGRID,HexAttr,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION3*/
+/*globals IMAGES,HEXGRID,HexAttr,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION3,Dashboard,modeEnum*/
+/*export NOISY.modeEnum */
 
 /*
  * Control Scheme
@@ -29,9 +30,9 @@ NOISY.turnElement = {};
 // Set by loadMap() function
 NOISY.currentMap = {};
 
-var MODE_ACTION = 'a';
-var MODE_SELECT = 's';
-NOISY.mode = MODE_SELECT;
+NOISY.dashboard = new Dashboard();
+
+NOISY.mode = modeEnum.ACTION;
 
 // The cell the user has selected
 NOISY.userSelectedCell = null;
@@ -129,9 +130,19 @@ NOISY.handleMoveInput = function (cell, skipCheck) {
 
    if (cell !== null) {
 
-      NOISY.userSelectedCell = cell.getAttr(HexAttr.WALL) === true ? null : cell;
+      if (cell.getAttr(HexAttr.WALL) === true) {
+         NOISY.userSelectedCell = null;
+         NOISY.dashboard.clearActor();
+      } else {
+         NOISY.userSelectedCell = cell;
+         if (cell.getAttr(HexAttr.ACTOR) !== undefined) {
+            NOISY.dashboard.setActor(NOISY.userSelectedCell.getAttr(HexAttr.ACTOR));
+         } else {
+            NOISY.dashboard.clearActor();
+         }
+      }
 
-      if (NOISY.mode === MODE_ACTION) {
+      if (NOISY.mode === modeEnum.ACTION) {
 
          if (cell.getAttr(HexAttr.ACTOR) === undefined &&
              cell.getAttr(HexAttr.WALL) !== true &&
@@ -154,6 +165,7 @@ NOISY.handleMoveInput = function (cell, skipCheck) {
    } else {
       NOISY.userSelectedCell = null;
       NOISY.selectableActorCell = null;
+      NOISY.dashboard.clearActor();
    }
 };
 
@@ -188,11 +200,12 @@ NOISY.handleClickInput = function (cell) {
       return;
    }
 
-   if (NOISY.mode === MODE_SELECT) {
+   if (NOISY.mode === modeEnum.SELECT) {
 
       if (NOISY.selectableActorCell !== null) {
          NOISY.selPlayer = NOISY.selectableActorCell.getAttr(HexAttr.ACTOR);
-         NOISY.mode = MODE_ACTION;
+         NOISY.mode = modeEnum.ACTION;
+         NOISY.dashboard.setMode(NOISY.mode);
          NOISY.selPlayerView = NOISY.calculateActorView(NOISY.selPlayer);
       }
 
@@ -228,7 +241,8 @@ NOISY.handleClickInput = function (cell) {
 NOISY.endActionMode = function () {
    "use strict";
 
-   NOISY.mode = MODE_SELECT;
+   NOISY.mode = modeEnum.SELECT;
+   NOISY.dashboard.setMode(NOISY.mode);
 
    NOISY.userSelectedCell = null;
 
@@ -448,24 +462,6 @@ function renderTarget (ctx, targetableCells, userSelectedCell) {
    ctx.restore();
 }
 
-NOISY.renderDashboard = function (canvas /*, interval*/) {
-   "use strict";
-   var ctx = canvas.getContext("2d");
-
-   ctx.clearRect(0, 0, canvas.width, canvas.height);
-   ctx.fillStyle = '#7fcabb';
-   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-   ctx.fillStyle = '#000000';
-   ctx.font = "18px Serif";
-   ctx.fillText("Mode:" + (NOISY.mode === MODE_ACTION ? "ACTION" : "SELECT"), 10, 16);
-
-   if (NOISY.userSelectedCell !== null && NOISY.userSelectedCell.getAttr(HexAttr.ACTOR)) {
-      ctx.fillText("AP:" + NOISY.userSelectedCell.getAttr(HexAttr.ACTOR).getCurAP(), 150, 16);
-      ctx.fillText("Health:" + NOISY.userSelectedCell.getAttr(HexAttr.ACTOR).getHealth(), 200, 16);
-   }
-};
-
 NOISY.renderBackground = function (canvas2 /*, interval*/) {
    "use strict";
    var ctx2 = canvas2.getContext("2d");
@@ -507,7 +503,7 @@ NOISY.renderMain = function (canvas /*, interval*/) {
       n.render(ctx, NOISY.images);
    });
 
-   if (NOISY.mode === MODE_SELECT) {
+   if (NOISY.mode === modeEnum.SELECT) {
 
       // mouse over cell
       if (NOISY.userSelectedCell !== null) {
@@ -710,7 +706,7 @@ NOISY.run = function () {
 
       NOISY.renderMain(canvasMain, dt);
 
-      NOISY.renderDashboard(canvasDashboard, dt);
+      NOISY.dashboard.render(canvasDashboard);
 
       last = now;
 
