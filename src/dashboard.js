@@ -1,4 +1,4 @@
-/*globals modeEnum*/
+/*globals modeEnum, RenderFlag*/
 
 function Dashboard() {
    "use strict";
@@ -8,26 +8,13 @@ function Dashboard() {
       ap: 0,
       health: 0
    };
-   this.requestRender(false, true);
+   this.renderFlag = new RenderFlag();
 }
-
-Dashboard.prototype.requestRender = function(oldValue, newValue) {
-   "use strict";
-
-   if (this.needsRender === false) {
-
-      // A simple way to compare JSON style objects
-      // order is important
-      this.needsRender = this.needsRender || JSON.stringify(oldValue) !== JSON.stringify(newValue);
-   }
-
-   return newValue;
-};
 
 Dashboard.prototype.setMode = function(mode) {
    "use strict";
 
-   this.mode = this.requestRender(this.mode, mode);
+   this.mode = this.renderFlag.update(this.mode, mode);
 };
 
 Dashboard.prototype.setActor = function(actor) {
@@ -43,23 +30,21 @@ Dashboard.prototype.setActor = function(actor) {
          health: actor.getHealth()
       };
 
-      this.actor = this.requestRender(this.actor, newActor);
+      this.actor = this.renderFlag.update(this.actor, newActor);
    }
 };
 
 Dashboard.prototype.clearActor = function() {
    "use strict";
-   this.actor.isValid = this.requestRender(this.actor.isValid, false);
+   this.actor.isValid = this.renderFlag.update(this.actor.isValid, false);
 };
 
 Dashboard.prototype.render = function(canvas) {
    "use strict";
 
-   if (this.needsRender === false) {
+   if (this.renderFlag.isRender() === false) {
       return;
    }
-
-   this.needsRender = false;
 
    console.log('dashboard render');
 

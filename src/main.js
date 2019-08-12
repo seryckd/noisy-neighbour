@@ -1,5 +1,4 @@
-/*globals IMAGES,HEXGRID,HexAttr,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION3,Dashboard,modeEnum*/
-/*export NOISY.modeEnum */
+/*globals IMAGES,HEXGRID,HexAttr,UTILS,PLAYER,MAPS,ASTAR,NPC,ComputerAction,MoveActorAction,MissileAction,MeleeAction,GameOverAction,DIFFUSION3,Dashboard,modeEnum,RenderFlag*/
 
 /*
  * Control Scheme
@@ -31,6 +30,7 @@ NOISY.turnElement = {};
 NOISY.currentMap = {};
 
 NOISY.dashboard = new Dashboard();
+NOISY.renderFlag = new RenderFlag();
 
 NOISY.mode = modeEnum.ACTION;
 
@@ -486,6 +486,12 @@ NOISY.renderMain = function (canvas /*, interval*/) {
     mouseOverColour = '#00ff00',
     selectableColour = '#ff0040';
 
+   /*
+   if (NOISY.renderFlag.isRender() === false) {
+      return;
+   }
+   */
+
    // if ctx is null then canvas is not supported
    ctx = canvas.getContext("2d");
 
@@ -603,6 +609,8 @@ NOISY.loadMap = function (map) {
 
    // Initial diffusion
    NOISY.diffusionMap.diffuse('player');
+
+   NOISY.isRedrawGrid = true;
 };
 
 NOISY.run = function () {
