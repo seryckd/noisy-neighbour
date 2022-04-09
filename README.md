@@ -1,19 +1,25 @@
 # In Progress
 
+[Play on GitHub here](http://seryckd.github.io/noisy-neighbour/src/index.html)
+
 _Part of my Learning JavaScript series_
 
 Everything is better with Programmer Art (TM).
 
 The aim is to use plain JavaScript with no toolchain just for learning purposes. Initially everything is HTML and Canvas.
 
-   * let is not available in Safarif9 (would need a transpiler)
+Control
+* mouse to click and select
+* w, a, s, d to scroll
+* space to end turn
 
-May need to look at WebGL as mobile performance is so far quite bad.
-
-Take a look at http://seryckd.github.io/noisy-neighbour/src/index.html
+Completed
+* AI using Collaborative Diffusion
+* Click and select control scheme
 
 ## TODO
 
+* May need to look at WebGL as mobile performance is so far quite bad.
 * line() is selecting cells that are not there. need to find a way to select around the gaps
 * can target enemies outside of LoS
 * implement different strategies.

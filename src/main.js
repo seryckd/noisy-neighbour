@@ -649,7 +649,7 @@ NOISY.run = function () {
 
    NOISY.hexgrid = new HEXGRID();
 
-   NOISY.loadMap(MAPS.one);
+   NOISY.loadMap(MAPS.alley);
 
    // Track the mouse
    // Only call after setup globals
